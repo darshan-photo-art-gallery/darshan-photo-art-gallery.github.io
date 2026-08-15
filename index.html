@@ -701,15 +701,53 @@ const STORE = {
   adminTab: 'products',
 };
 
+// FIREBASE REALTIME CLOUD BACKEND CONFIGURATION
+const firebaseConfig = window.FIREBASE_CONFIG || {
+  databaseURL: "https://darshan-photo-art-gallery-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "darshan-photo-art-gallery"
+};
+
+let isFirebaseConnected = false;
+
+function initFirebaseSync() {
+  if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const db = firebase.database();
+      const keys = ['products', 'categories', 'offers', 'gallery'];
+
+      keys.forEach(k => {
+        db.ref('dpag_store/' + k).on('value', snapshot => {
+          const val = snapshot.val();
+          if (val && Array.isArray(val) && val.length > 0) {
+            STORE[k] = val;
+            localStorage.setItem('dpag_' + k, JSON.stringify(val));
+            isFirebaseConnected = true;
+            render();
+          } else {
+            // Seed cloud database if empty
+            db.ref('dpag_store/' + k).set(STORE[k]);
+            isFirebaseConnected = true;
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('Firebase Sync Notice:', err);
+    }
+  }
+}
+
 function saveStore(key) {
   try {
     localStorage.setItem('dpag_' + key, JSON.stringify(STORE[key]));
-    // Realtime Cloud Sync if Firebase is configured
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.database) {
+    // Push update live to Firebase Cloud Database
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.database && firebaseConfig.databaseURL) {
       firebase.database().ref('dpag_store/' + key).set(STORE[key]);
     }
   } catch (err) {
-    console.error('LocalStorage / Sync Error:', err);
+    console.error('LocalStorage / Cloud Sync Error:', err);
     showToast('⚠️ સ્ટોરેજ સંચાલનમાં એરર છે.');
   }
 }
@@ -1239,8 +1277,8 @@ function renderAdmin() {
           <h1 class="font-display text-3xl font-bold text-ivory-50 sm:text-4xl">Store Management Console</h1>
         </div>
         <div class="flex items-center gap-3">
-          <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-            <i class="fa-solid fa-shield-halved mr-1"></i> Session Secure
+          <span class="rounded-full px-3 py-1 text-xs font-semibold border ${isFirebaseConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}">
+            <i class="fa-solid ${isFirebaseConnected ? 'fa-cloud-bolt' : 'fa-database'} mr-1"></i> ${isFirebaseConnected ? 'Firebase Live Cloud Synced' : 'Local Storage Mode'}
           </span>
           <button onclick="adminLogout()" class="btn-outline-luxury !py-2 !px-4 !text-xs">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -2094,6 +2132,7 @@ window.addEventListener('hashchange', render);
 window.addEventListener('DOMContentLoaded', () => {
   populateFooter();
   updateBadges();
+  initFirebaseSync();
   render();
   setTimeout(() => {
     const loader = document.getElementById('loader');
