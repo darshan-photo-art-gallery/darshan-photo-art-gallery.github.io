@@ -1,0 +1,272 @@
+<?php
+require_once __DIR__ . '/../config/connection.php';
+require_once __DIR__ . '/../config/security.php';
+
+SecurityEngine::applySecurityHeaders();
+$csrf_token = SecurityEngine::generateCSRF();
+
+// 1. Fetch Categories for the Dynamic Sidebar Filter Navigation
+try {
+    $cat_stmt = $pdo->query("SELECT * FROM categories ORDER BY sort_order ASC");
+    $categories = $cat_stmt->fetchAll();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $categories = [];
+}
+
+// 2. Resolve Active Category View States (For direct deep-linking SEO architectures)
+$active_cat_slug = isset($_GET['category']) ? SecurityEngine::cleanInput($_GET['category']) : '';
+$active_cat_id = 0;
+
+if (!empty($active_cat_slug)) {
+    foreach ($categories as $cat) {
+        if ($cat['slug'] === $active_cat_slug) {
+            $active_cat_id = $cat['id'];
+            break;
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Master Catalog | DARSHAN PHOTO ART GALLERY</title>
+    <meta name="description" content="Browse our luxury collections of museum-grade religious frames, LED architectural structures, and tailored diamond photo installations.">
+    
+    <!-- Premium UI Frameworks -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxBlack: '#0a0a0a',
+                        luxCharcoal: '#141414',
+                        luxGold: '#d4af37',
+                        luxGoldDark: '#aa8422'
+                    },
+                    fontFamily: {
+                        serif: ['Cormorant Garamond', 'serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .luxury-glass {
+            background: rgba(20, 20, 20, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.12);
+        }
+        .active-gold-filter {
+            border-color: #d4af37;
+            color: #d4af37;
+            background: rgba(212, 175, 55, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-luxBlack text-white font-sans overflow-x-hidden antialiased">
+
+    <!-- Sticky Translucent Navigation -->
+    <header class="fixed top-0 w-full z-50 luxury-glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
+            <a href="index.php" class="font-serif text-2xl tracking-widest text-white hover:text-luxGold transition-colors">
+                DARSHAN <span class="text-xs block tracking-normal font-sans text-luxGold">PHOTO ART GALLERY</span>
+            </a>
+            <nav class="hidden lg:flex space-x-10 text-sm tracking-widest uppercase font-light">
+                <a href="index.php" class="hover:text-luxGold transition-colors">Home</a>
+                <a href="#catalogView" class="text-luxGold tracking-wider font-medium">The Catalog</a>
+                <a href="index.php#experience" class="hover:text-luxGold transition-colors">Atelier Heritage</a>
+                <a href="index.php#contact" class="hover:text-luxGold transition-colors">Direct Consultations</a>
+            </nav>
+            <div>
+                <a href="index.php#contact" class="bg-luxGold hover:bg-luxGoldDark text-luxBlack text-xs tracking-widest uppercase font-semibold px-6 py-3 transition-all duration-300">
+                    Bespoke Order
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Deep Minimal Hero Accent Header -->
+    <section class="pt-40 pb-16 bg-gradient-to-b from-luxCharcoal to-luxBlack relative border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 text-center lg:text-left">
+            <span class="text-xs tracking-[0.4em] uppercase text-luxGold block mb-3">Exquisite Collections</span>
+            <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-light tracking-tight">The Master Portfolio</h1>
+        </div>
+    </section>
+
+    <!-- Live Interlocking Search & Grid Workspace Architecture -->
+    <main id="catalogView" class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12">
+        
+        <!-- Luxury Sidebar Navigation and Parameters Filter Interface -->
+        <aside class="space-y-8">
+            <div class="luxury-glass p-6 space-y-6">
+                <div>
+                    <h3 class="text-xs tracking-widest uppercase text-luxGold font-semibold mb-4">Search Artworks</h3>
+                    <div class="relative">
+                        <input type="text" id="liveSearchInput" placeholder="Enter SKU, Frame Title..." class="w-full bg-luxBlack border border-white/10 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:border-luxGold transition-colors">
+                        <i class="fas fa-search absolute right-4 top-3.5 text-gray-500"></i>
+                    </div>
+                </div>
+
+                <!-- Dynamic Functional Sort Rules Layer -->
+                <div>
+                    <h3 class="text-xs tracking-widest uppercase text-luxGold font-semibold mb-3">Sort Arrangement</h3>
+                    <select id="sortEngineSelect" class="w-full bg-luxBlack border border-white/10 rounded-none px-4 py-3 text-sm text-white focus:outline-none focus:border-luxGold transition-colors">
+                        <option value="trending">Featured Masterpieces</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="newest">Recent Gallery Acquisitions</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Category Fast-Filter Links Menu Component -->
+            <div class="luxury-glass p-6">
+                <h3 class="text-xs tracking-widest uppercase text-luxGold font-semibold mb-4">Collections Architecture</h3>
+                <div class="flex flex-col space-y-2">
+                    <button data-cat-id="0" class="category-filter-btn text-left text-sm font-light py-2 px-3 border border-transparent transition-all duration-300 hover:text-luxGold <?php echo $active_cat_id === 0 ? 'active-gold-filter' : 'text-gray-400'; ?>">
+                        All Portfolios
+                    </button>
+                    <?php foreach ($categories as $category): ?>
+                        <button data-cat-id="<?php echo $category['id']; ?>" class="category-filter-btn text-left text-sm font-light py-2 px-3 border border-transparent transition-all duration-300 hover:text-luxGold <?php echo $active_cat_id === $category['id'] ? 'active-gold-filter' : 'text-gray-400'; ?>">
+                            <?php echo htmlspecialchars($category['name_en']); ?>
+                        </button>
+                    <?php endphp; ?>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Asynchronous Product Result Layout Stream Container -->
+        <section class="lg:col-span-3">
+            <div id="catalogLoader" class="hidden text-center py-12">
+                <i class="fas fa-circle-notch animate-spin text-3xl text-luxGold"></i>
+                <p class="text-xs tracking-widest uppercase text-gray-500 mt-4">Curating Vault Records...</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="asyncContainer">
+                <!-- Populated inside system runtime execution by the async-catalog script engine underneath -->
+            </div>
+
+            <!-- Empty Matrix Feedback State Element -->
+            <div id="emptyCatalogState" class="hidden text-center py-20 luxury-glass">
+                <i class="fas fa-compass text-4xl text-luxGold/40 mb-4"></i>
+                <p class="font-serif text-xl">No matching masterworks found inside our inventory.</p>
+                <p class="text-xs text-gray-400 mt-2">Modify your query string metrics or clear your category parameters.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Premium System Footing Platform Component -->
+    <footer class="bg-luxCharcoal border-t border-white/5 py-12 text-center text-xs tracking-widest text-gray-500">
+        <p>&copy; 2026 DARSHAN PHOTO ART GALLERY. ALL RIGHTS RESERVED. ARCHITECTED FOR TIMELOCKED LUXURY PRESERVATION.</p>
+    </footer>
+
+    <!-- Execution Logic Control Pipeline Engines -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let activeCategoryId = <?php echo $active_cat_id; ?>;
+            const searchField = document.getElementById('liveSearchInput');
+            const sortSelection = document.getElementById('sortEngineSelect');
+            const targetGrid = document.getElementById('asyncContainer');
+            const globalLoader = document.getElementById('catalogLoader');
+            const blankState = document.getElementById('emptyCatalogState');
+
+            // Bind Event Listeners to Category Filter Components
+            document.querySelectorAll('.category-filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.category-filter-btn').forEach(b => {
+                        b.classList.remove('active-gold-filter');
+                        b.classList.add('text-gray-400');
+                    });
+                    e.currentTarget.classList.add('active-gold-filter');
+                    e.currentTarget.classList.remove('text-gray-400');
+                    
+                    activeCategoryId = e.currentTarget.getAttribute('data-cat-id');
+                    triggerAsynchronousSync();
+                });
+            });
+
+            // Input Debounce Pipeline Execution Layer for Optimized Database Interactions
+            let runtimeDebounceTimer;
+            searchField.addEventListener('input', () => {
+                clearTimeout(runtimeDebounceTimer);
+                runtimeDebounceTimer = setTimeout(triggerAsynchronousSync, 350);
+            });
+
+            sortSelection.addEventListener('change', triggerAsynchronousSync);
+
+            // Fetch and Process Database State Operations Asynchronously via AJAX Content Stream Engine
+            function triggerAsynchronousSync() {
+                globalLoader.classList.remove('hidden');
+                targetGrid.innerHTML = '';
+                blankState.classList.add('hidden');
+
+                const queryParameters = new URLSearchParams({
+                    action: 'filter',
+                    query: searchField.value,
+                    category: activeCategoryId,
+                    sort: sortSelection.value
+                });
+
+                fetch(`../controllers/ProductController.php?${queryParameters.toString()}`)
+                    .then(res => res.json())
+                    .then(payload => {
+                        globalLoader.classList.add('hidden');
+                        if(payload.status === 'success' && payload.count > 0) {
+                            renderCatalogCards(payload.data);
+                        } else {
+                            blankState.classList.remove('hidden');
+                        }
+                    })
+                    .catch(err => {
+                        globalLoader.classList.add('hidden');
+                        console.error('Core catalog sync pipeline encounter error:', err);
+                    });
+            }
+
+            // High-Fidelity Client-side Component Component Compilation Render Routine
+            function renderCatalogCards(items) {
+                let htmlBuffer = '';
+                items.forEach(item => {
+                    const fallbackImg = item.primary_img ? item.primary_img : 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?q=80&w=600&auto=format&fit=crop';
+                    const formattedPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(item.base_price);
+                    
+                    htmlBuffer += `
+                        <div class="luxury-glass group overflow-hidden transition-all duration-500 hover:shadow-[0_20px_40px_rgba(212,175,55,0.08)]">
+                            <div class="relative overflow-hidden aspect-[4/5] bg-neutral-900">
+                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('${fallbackImg}');"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-luxBlack via-transparent to-transparent opacity-80"></div>
+                                <span class="absolute bottom-4 left-4 text-[10px] tracking-widest text-gray-400 font-mono uppercase bg-luxBlack/60 px-2 py-0.5 border border-white/5">${item.sku}</span>
+                            </div>
+                            <div class="p-6">
+                                <span class="text-[11px] uppercase tracking-[0.2em] text-luxGold block">${item.cat_name}</span>
+                                <h4 class="font-serif text-xl mt-1 mb-4 text-white group-hover:text-luxGold transition-colors">${item.title_en}</h4>
+                                <div class="flex justify-between items-center pt-4 border-t border-white/5">
+                                    <span class="font-serif text-lg text-gray-300">${formattedPrice}</span>
+                                    <a href="https://wa.me/91XXXXXXXXXX?text=I%20am%20inquiring%20about%20the%20${encodeURIComponent(item.title_en)}%20(SKU:%20${item.sku})" target="_blank" class="text-xs uppercase tracking-widest text-luxGold flex items-center gap-2 hover:underline">
+                                        Inquire <i class="fab fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                targetGrid.innerHTML = htmlBuffer;
+            }
+
+            // Initial Bootstrap Catalog Load Trigger invocation
+            triggerAsynchronousSync();
+        });
+    </script>
+</body>
+</html>
