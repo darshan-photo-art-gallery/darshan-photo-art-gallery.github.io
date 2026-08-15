@@ -534,7 +534,7 @@ tailwind.config = {
       <div>
         <h4 class="font-display text-lg text-gold-200">Stay Connected</h4>
         <p class="mt-3 text-xs text-ivory-100/65">Subscribe for exclusive festival offers &amp; new collection launches.</p>
-        <form id="newsletterForm" class="mt-4">
+        <form id="newsletterForm" onsubmit="handleNewsletterSubmit(event)" class="mt-4">
           <div class="flex overflow-hidden rounded-full border border-gold-400/30 bg-white/5">
             <input type="email" id="newsletterEmail" required placeholder="Your email address" class="w-full bg-transparent px-4 py-3 text-sm text-ivory-100 outline-none placeholder:text-ivory-100/40" />
             <button type="submit" class="flex items-center justify-center bg-gold-400 px-5 text-noir-950 font-bold transition hover:bg-gold-300">
@@ -698,6 +698,7 @@ const STORE = {
   categories: JSON.parse(localStorage.getItem('dpag_categories') || 'null') || SEED_CATEGORIES,
   offers: JSON.parse(localStorage.getItem('dpag_offers') || 'null') || SEED_OFFERS,
   gallery: JSON.parse(localStorage.getItem('dpag_gallery') || 'null') || SEED_GALLERY,
+  subscribers: JSON.parse(localStorage.getItem('dpag_subscribers') || '[]'),
   adminTab: 'products',
 };
 
@@ -716,7 +717,7 @@ function initFirebaseSync() {
         firebase.initializeApp(firebaseConfig);
       }
       const db = firebase.database();
-      const keys = ['products', 'categories', 'offers', 'gallery'];
+      const keys = ['products', 'categories', 'offers', 'gallery', 'subscribers'];
 
       keys.forEach(k => {
         db.ref('dpag_store/' + k).on('value', snapshot => {
@@ -1300,6 +1301,9 @@ function renderAdmin() {
         <button onclick="setAdminTab('gallery')" class="rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition ${activeTab === 'gallery' ? 'bg-gold-400 text-noir-950 shadow-lg' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">
           <i class="fa-solid fa-images mr-1.5"></i> Gallery (${STORE.gallery.length})
         </button>
+        <button onclick="setAdminTab('subscribers')" class="rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition ${activeTab === 'subscribers' ? 'bg-gold-400 text-noir-950 shadow-lg' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">
+          <i class="fa-solid fa-envelope mr-1.5"></i> Subscribers (${(STORE.subscribers || []).length})
+        </button>
         <button onclick="setAdminTab('security')" class="rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition ${activeTab === 'security' ? 'bg-gold-400 text-noir-950 shadow-lg' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">
           <i class="fa-solid fa-lock mr-1.5"></i> Security &amp; Password
         </button>
@@ -1314,6 +1318,7 @@ function renderAdmin() {
         ${activeTab === 'categories' ? renderAdminCategories() : ''}
         ${activeTab === 'offers' ? renderAdminOffers() : ''}
         ${activeTab === 'gallery' ? renderAdminGallery() : ''}
+        ${activeTab === 'subscribers' ? renderAdminSubscribers() : ''}
         ${activeTab === 'security' ? renderAdminSecurity() : ''}
         ${activeTab === 'backup' ? renderAdminBackup() : ''}
       </div>
@@ -1788,7 +1793,88 @@ function deleteGalleryItem(idx) {
   }
 }
 
-// ---------------- SECURITY TAB ----------------
+function handleNewsletterSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('newsletterEmail');
+  const msg = document.getElementById('newsletterMsg');
+  const email = input.value.trim();
+
+  if (email) {
+    if (!STORE.subscribers) STORE.subscribers = [];
+    if (!STORE.subscribers.some(s => s.email === email)) {
+      STORE.subscribers.push({ email: email, date: new Date().toLocaleDateString('en-IN') });
+      saveStore('subscribers');
+    }
+    msg.textContent = '✓ આભાર! તમારું ઈમેઈલ સફળતાપૂર્વક સબ્સ્ક્રાઇબ થઈ ગયું છે.';
+    msg.className = 'mt-2 text-xs text-emerald-400 font-semibold font-gujarati block';
+    input.value = '';
+    setTimeout(() => msg.classList.add('hidden'), 5000);
+  }
+}
+
+// ---------------- SUBSCRIBERS TAB ----------------
+function renderAdminSubscribers() {
+  const list = STORE.subscribers || [];
+  return `
+    <div>
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="font-display text-2xl font-bold text-gold-200">Email Subscribers List (${list.length})</h2>
+          <p class="text-xs text-ivory-100/60 font-gujarati mt-1">ગ્રાહકો દ્વારા "Stay Connected" માં સબ્સ્ક્રાઇબ કરેલ ઈમેઈલ સરનામાં.</p>
+        </div>
+        ${list.length > 0 ? `
+          <button onclick="copySubscribersList()" class="btn-luxury !py-2.5 !px-5 text-xs">
+            <i class="fa-solid fa-copy mr-1"></i> Copy All Emails (૧-ક્લિક કોપી)
+          </button>
+        ` : ''}
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl glass-panel p-2">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold">
+            <tr>
+              <th class="p-3">#</th>
+              <th class="p-3">Customer Email Address</th>
+              <th class="p-3">Subscription Date</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            ${list.length === 0 ? `
+              <tr><td colspan="4" class="p-6 text-center text-xs text-ivory-100/50">હજુ સુધી કોઈ ઈમેઈલ સબ્સ્ક્રાઇબ થયા નથી.</td></tr>
+            ` : list.map((s, idx) => `
+              <tr class="hover:bg-white/5 transition">
+                <td class="p-3 text-xs text-ivory-100/40">${idx + 1}</td>
+                <td class="p-3 font-semibold text-ivory-100">${escapeHTML(s.email)}</td>
+                <td class="p-3 text-xs text-ivory-100/70">${escapeHTML(s.date || 'Today')}</td>
+                <td class="p-3 text-right">
+                  <button onclick="deleteSubscriber('${escapeHTML(s.email)}')" class="rounded-lg bg-rose-500/15 p-2 text-rose-400 hover:bg-rose-500 hover:text-white transition" title="Delete Email">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function copySubscribersList() {
+  const emails = (STORE.subscribers || []).map(s => s.email).join(', ');
+  navigator.clipboard.writeText(emails);
+  showToast('✓ બધા જ ઈમેઈલ બોર્ડમાં કોપી થઈ ગયા છે!');
+}
+
+function deleteSubscriber(email) {
+  if (confirm(`શું તમે આ ઈમેઈલ (${email}) કાઢી નાખવા માંગો છો?`)) {
+    STORE.subscribers = (STORE.subscribers || []).filter(s => s.email !== email);
+    saveStore('subscribers');
+    showToast('✓ ઈમેઈલ હટાવી દેવાયો');
+    render();
+  }
+}
 function renderAdminSecurity() {
   return `
     <div class="max-w-xl mx-auto">
