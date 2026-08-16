@@ -1517,28 +1517,44 @@ function renderAdminCategories() {
   return `
     <div>
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h2 class="font-display text-2xl font-bold text-gold-200">Manage Categories</h2>
+        <div>
+          <h2 class="font-display text-2xl font-bold text-gold-200">Manage Categories</h2>
+          <p class="text-xs text-ivory-100/60 font-gujarati mt-1">કેટેગરીનું સ્થાન બદલવા માટે ⬆ ⬇ એરો બટન વાપરો, અને એડિટ કરવા પૅન આઇકન પર ક્લિક કરો.</p>
+        </div>
         <button onclick="openCategoryModal()" class="btn-luxury !py-2.5 !px-5 text-xs">
           <i class="fa-solid fa-plus"></i> Add New Category
         </button>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        ${STORE.categories.map(c => `
+        ${STORE.categories.map((c, idx) => `
           <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
             <div class="flex items-center gap-4">
               <img src="${escapeHTML(c.cover)}" class="h-16 w-16 rounded-xl object-cover border border-gold-400/30 shrink-0" />
-              <div>
-                <h3 class="font-display text-lg font-bold text-ivory-50">${escapeHTML(c.name)}</h3>
-                <p class="text-xs text-gold-300 font-semibold">${escapeHTML(c.nameGu || '')}</p>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-display text-lg font-bold text-ivory-50 truncate">${escapeHTML(c.name)}</h3>
+                <p class="text-xs text-gold-300 font-semibold truncate">${escapeHTML(c.nameGu || '')}</p>
                 <p class="text-[0.7rem] text-ivory-100/50 mt-1">Slug: ${escapeHTML(c.slug)}</p>
               </div>
             </div>
             <div class="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
               <span class="text-xs text-ivory-100/60">${STORE.products.filter(p => p.category === c.slug).length} Products</span>
-              <button onclick="deleteCategory('${escapeHTML(c.slug)}')" class="text-rose-400 hover:text-rose-300 text-xs font-semibold">
-                <i class="fa-solid fa-trash-can"></i> Delete
-              </button>
+              
+              <!-- REORDERING & EDIT / DELETE BUTTONS -->
+              <div class="flex items-center gap-1.5">
+                <button onclick="moveCategory(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 cursor-not-allowed p-1.5 text-xs text-ivory-100/40"' : 'class="rounded-lg bg-white/10 p-1.5 text-xs text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition"'} title="Move Up (ઉપર ખસેડો)">
+                  <i class="fa-solid fa-arrow-up"></i>
+                </button>
+                <button onclick="moveCategory(${idx}, 1)" ${idx === STORE.categories.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed p-1.5 text-xs text-ivory-100/40"' : 'class="rounded-lg bg-white/10 p-1.5 text-xs text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition"'} title="Move Down (નીચે ખસેડો)">
+                  <i class="fa-solid fa-arrow-down"></i>
+                </button>
+                <button onclick="openCategoryModal('${escapeHTML(c.slug)}')" class="rounded-lg bg-gold-400/15 p-1.5 text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition ml-1" title="Edit Category">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteCategory('${escapeHTML(c.slug)}')" class="rounded-lg bg-rose-500/15 p-1.5 text-rose-400 hover:bg-rose-500 hover:text-white transition" title="Delete Category">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
             </div>
           </div>
         `).join('')}
@@ -1547,36 +1563,49 @@ function renderAdminCategories() {
   `;
 }
 
-function openCategoryModal() {
+function moveCategory(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= STORE.categories.length) return;
+  const temp = STORE.categories[index];
+  STORE.categories[index] = STORE.categories[newIndex];
+  STORE.categories[newIndex] = temp;
+  saveStore('categories');
+  showToast('✓ કેટેગરીનું સ્થાન બદલાઈ ગયું');
+  render();
+}
+
+function openCategoryModal(existingSlug = null) {
+  const c = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
   const mc = document.getElementById('modalContainer');
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">Add Category</h3>
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">${c ? 'Edit Category' : 'Add Category'}</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
-        <form onsubmit="saveCategoryForm(event)" class="mt-6 space-y-4">
+        <form onsubmit="saveCategoryForm(event, '${existingSlug || ''}')" class="mt-6 space-y-4">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (English)</label>
-            <input id="cName" required class="admin-input" placeholder="e.g. Mataji Paat (Bajot)" />
+            <input id="cName" required value="${c ? escapeHTML(c.name) : ''}" class="admin-input" placeholder="e.g. Mataji Paat (Bajot)" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (Gujarati)</label>
-            <input id="cNameGu" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
+            <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
-            <textarea id="cDesc" rows="2" class="admin-input"></textarea>
+            <textarea id="cDesc" rows="2" class="admin-input">${c ? escapeHTML(c.description || '') : ''}</textarea>
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image (Upload)</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image ${c ? '(બદલવા માટે નવો ફોટો અપલોડ કરો)' : '(Upload)'}</label>
             <input id="cCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
+            ${c ? `<p class="text-xs text-ivory-100/50 mt-1">હાલનો ફોટો સેવ રહેશે જો નવો પસંદ નહીં કરો.</p>` : ''}
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
             <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
-            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> Save Category</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> ${c ? 'Update Category' : 'Save Category'}</button>
           </div>
         </form>
       </div>
@@ -1584,7 +1613,7 @@ function openCategoryModal() {
   `;
 }
 
-async function saveCategoryForm(e) {
+async function saveCategoryForm(e, existingSlug) {
   e.preventDefault();
   try {
     const name = document.getElementById('cName').value.trim();
@@ -1592,16 +1621,26 @@ async function saveCategoryForm(e) {
     const desc = document.getElementById('cDesc').value.trim();
     const file = document.getElementById('cCoverFile').files?.[0];
 
-    let cover = '3.jpeg';
+    const existingCat = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
+    let cover = existingCat ? existingCat.cover : '3.jpeg';
     if (file) cover = await compressImage(file, 1200, 1200, 0.88);
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const slug = cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now());
+    const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
 
-    STORE.categories.push({ slug, name, nameGu, description: desc, cover, icon: 'fa-box', featured: true });
+    const categoryData = { slug, name, nameGu, description: desc, cover, icon: existingCat?.icon || 'fa-box', featured: true };
+
+    if (existingSlug) {
+      const idx = STORE.categories.findIndex(x => x.slug === existingSlug);
+      if (idx >= 0) STORE.categories[idx] = categoryData;
+      else STORE.categories.push(categoryData);
+    } else {
+      STORE.categories.push(categoryData);
+    }
+
     saveStore('categories');
     closeModal();
-    showToast('✓ કેટેગરી સફળતાપૂર્વક ઉમેરાઈ ગઈ!');
+    showToast(existingSlug ? '✓ કેટેગરી અપડેટ થઈ ગઈ!' : '✓ કેટેગરી ઉમેરાઈ ગઈ!');
     render();
   } catch (err) {
     console.error('Save category error:', err);
@@ -1623,7 +1662,10 @@ function renderAdminOffers() {
   return `
     <div>
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h2 class="font-display text-2xl font-bold text-gold-200">Manage Offers</h2>
+        <div>
+          <h2 class="font-display text-2xl font-bold text-gold-200">Manage Offers</h2>
+          <p class="text-xs text-ivory-100/60 font-gujarati mt-1">ઓફરનું સ્થાન બદલવા માટે ⬅ ➡ એરો બટન વાપરો, અને એડિટ કરવા પૅન આઇકન પર ક્લિક કરો.</p>
+        </div>
         <button onclick="openOfferModal()" class="btn-luxury !py-2.5 !px-5 text-xs">
           <i class="fa-solid fa-plus"></i> Add New Offer
         </button>
@@ -1634,16 +1676,30 @@ function renderAdminOffers() {
           <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
             <div class="flex items-center gap-4">
               <img src="${escapeHTML(o.image)}" class="h-20 w-24 rounded-xl object-cover border border-gold-400/30 shrink-0" />
-              <div>
+              <div class="flex-1 min-w-0">
                 <span class="inline-block rounded-full bg-gold-metallic px-2.5 py-0.5 text-[0.65rem] font-bold text-noir-950">${escapeHTML(o.badge)}</span>
-                <h3 class="mt-1 font-display text-lg font-bold text-ivory-50">${escapeHTML(o.title)}</h3>
+                <h3 class="mt-1 font-display text-lg font-bold text-ivory-50 truncate">${escapeHTML(o.title)}</h3>
                 <p class="text-xs text-ivory-100/60 line-clamp-2 mt-1">${escapeHTML(o.description)}</p>
               </div>
             </div>
-            <div class="mt-4 flex justify-end border-t border-white/10 pt-3">
-              <button onclick="deleteOffer(${idx})" class="text-rose-400 hover:text-rose-300 text-xs font-semibold">
-                <i class="fa-solid fa-trash-can"></i> Delete Offer
-              </button>
+            <div class="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
+              <!-- REORDERING BUTTONS -->
+              <div class="flex items-center gap-1.5">
+                <button onclick="moveOffer(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-30 cursor-not-allowed p-1.5 text-xs text-ivory-100/40"' : 'class="rounded-lg bg-white/10 p-1.5 text-xs text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition"'} title="Move Left/Up">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <button onclick="moveOffer(${idx}, 1)" ${idx === STORE.offers.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed p-1.5 text-xs text-ivory-100/40"' : 'class="rounded-lg bg-white/10 p-1.5 text-xs text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition"'} title="Move Right/Down">
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openOfferModal(${idx})" class="rounded-lg bg-gold-400/15 p-1.5 text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition" title="Edit Offer">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteOffer(${idx})" class="rounded-lg bg-rose-500/15 p-1.5 text-rose-400 hover:bg-rose-500 hover:text-white transition" title="Delete Offer">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
             </div>
           </div>
         `).join('')}
@@ -1652,36 +1708,49 @@ function renderAdminOffers() {
   `;
 }
 
-function openOfferModal() {
+function moveOffer(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= STORE.offers.length) return;
+  const temp = STORE.offers[index];
+  STORE.offers[index] = STORE.offers[newIndex];
+  STORE.offers[newIndex] = temp;
+  saveStore('offers');
+  showToast('✓ ઓફરનું સ્થાન બદલાઈ ગયું');
+  render();
+}
+
+function openOfferModal(existingIdx = null) {
+  const o = (existingIdx !== null && existingIdx !== undefined) ? STORE.offers[existingIdx] : null;
   const mc = document.getElementById('modalContainer');
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">Add Offer</h3>
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">${o ? 'Edit Offer' : 'Add Offer'}</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
-        <form onsubmit="saveOfferForm(event)" class="mt-6 space-y-4">
+        <form onsubmit="saveOfferForm(event, ${existingIdx !== null && existingIdx !== undefined ? existingIdx : 'null'})" class="mt-6 space-y-4">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Title</label>
-            <input id="oTitle" required class="admin-input" placeholder="e.g. Diwali Divine Offer" />
+            <input id="oTitle" required value="${o ? escapeHTML(o.title) : ''}" class="admin-input" placeholder="e.g. Diwali Divine Offer" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Badge Tag</label>
-            <input id="oBadge" class="admin-input" placeholder="FESTIVAL SPECIAL" />
+            <input id="oBadge" value="${o ? escapeHTML(o.badge) : ''}" class="admin-input" placeholder="FESTIVAL SPECIAL" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
-            <textarea id="oDesc" rows="2" class="admin-input"></textarea>
+            <textarea id="oDesc" rows="2" class="admin-input">${o ? escapeHTML(o.description) : ''}</textarea>
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image (Upload)</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image ${o ? '(બદલવા માટે નવો ફોટો અપલોડ કરો)' : '(Upload)'}</label>
             <input id="oCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
+            ${o ? `<p class="text-xs text-ivory-100/50 mt-1">હાલનો ફોટો સેવ રહેશે જો નવો પસંદ નહીં કરો.</p>` : ''}
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
             <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
-            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> Save Offer</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> ${o ? 'Update Offer' : 'Save Offer'}</button>
           </div>
         </form>
       </div>
@@ -1689,21 +1758,34 @@ function openOfferModal() {
   `;
 }
 
-async function saveOfferForm(e) {
+async function saveOfferForm(e, existingIdx) {
   e.preventDefault();
-  const title = document.getElementById('oTitle').value.trim();
-  const badge = document.getElementById('oBadge').value.trim() || 'PROMO';
-  const desc = document.getElementById('oDesc').value.trim();
-  const file = document.getElementById('oCoverFile').files?.[0];
+  try {
+    const title = document.getElementById('oTitle').value.trim();
+    const badge = document.getElementById('oBadge').value.trim() || 'PROMO';
+    const desc = document.getElementById('oDesc').value.trim();
+    const file = document.getElementById('oCoverFile').files?.[0];
 
-  let image = '16.jpeg';
-  if (file) image = await compressImage(file, 800, 800, 0.8);
+    const existingOffer = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null') ? STORE.offers[existingIdx] : null;
+    let image = existingOffer ? existingOffer.image : '16.jpeg';
+    if (file) image = await compressImage(file, 1200, 1200, 0.88);
 
-  STORE.offers.push({ id: 'off-' + Date.now(), title, badge, description: desc, image });
-  saveStore('offers');
-  closeModal();
-  showToast('✓ Offer added');
-  render();
+    const offerData = { id: existingOffer ? existingOffer.id : ('off-' + Date.now()), title, badge, description: desc, image };
+
+    if (existingOffer) {
+      STORE.offers[existingIdx] = offerData;
+    } else {
+      STORE.offers.push(offerData);
+    }
+
+    saveStore('offers');
+    closeModal();
+    showToast(existingOffer ? '✓ ઓફર અપડેટ થઈ ગઈ!' : '✓ ઓફર ઉમેરાઈ ગઈ!');
+    render();
+  } catch (err) {
+    console.error('Save offer error:', err);
+    showToast('❌ ઓફર સેવ કરવામાં ભૂલ આવી.');
+  }
 }
 
 function deleteOffer(idx) {
