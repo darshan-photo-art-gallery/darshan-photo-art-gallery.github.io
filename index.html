@@ -679,6 +679,7 @@ const firebaseConfig = window.FIREBASE_CONFIG || {
 };
 
 let isFirebaseConnected = false;
+const localWriteAt = {};
 
 function initFirebaseSync() {
   if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
@@ -693,8 +694,13 @@ function initFirebaseSync() {
         db.ref('dpag_store/' + k).on('value', snapshot => {
           const val = snapshot.val();
           if (val && Array.isArray(val) && val.length > 0) {
+            // Ignore remote echoes while a local save is in flight, otherwise
+            // a freshly added product gets overwritten by stale cloud data.
+            if (Date.now() - (localWriteAt[k] || 0) < 8000) { isFirebaseConnected = true; return; }
+            const incoming = JSON.stringify(val);
+            if (incoming === JSON.stringify(STORE[k])) { isFirebaseConnected = true; return; }
             STORE[k] = val;
-            localStorage.setItem('dpag_' + k, JSON.stringify(val));
+            try { localStorage.setItem('dpag_' + k, incoming); } catch (e) { console.warn('local cache skipped', e); }
             isFirebaseConnected = true;
             render();
           } else {
@@ -711,15 +717,25 @@ function initFirebaseSync() {
 }
 
 function saveStore(key) {
+  localWriteAt[key] = Date.now();
+  const payload = JSON.stringify(STORE[key]);
+
+  // Cloud write first - it must never be skipped because of a full localStorage.
   try {
-    localStorage.setItem('dpag_' + key, JSON.stringify(STORE[key]));
-    // Push update live to Firebase Cloud Database
     if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.database && firebaseConfig.databaseURL) {
-      firebase.database().ref('dpag_store/' + key).set(STORE[key]);
+      firebase.database().ref('dpag_store/' + key).set(STORE[key])
+        .catch(err => { console.error('Cloud sync error:', err); showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err)); });
     }
   } catch (err) {
-    console.error('LocalStorage / Cloud Sync Error:', err);
-    showToast('⚠️ સ્ટોરેજ સંચાલનમાં એરર છે.');
+    console.error('Cloud sync error:', err);
+  }
+
+  // Local cache (best effort - large base64 photos can exceed the 5MB quota).
+  try {
+    localStorage.setItem('dpag_' + key, payload);
+  } catch (err) {
+    console.warn('LocalStorage quota exceeded, keeping data in memory/cloud only:', err);
+    showToast('⚠️ ફોટા મોટા છે - લોકલ કેશ ભરાઈ ગયું, ડેટા ક્લાઉડમાં સેવ થયો.');
   }
 }
 
@@ -764,7 +780,7 @@ function showToast(msg) {
 }
 
 // Canvas Compression Helper (High-Definition 1200px @ 0.88 Quality - HD Clarity Preserved)
-function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.88) {
+function compressImage(file, maxWidth = 900, maxHeight = 900, quality = 0.72) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -780,7 +796,11 @@ function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.88) 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        let out = canvas.toDataURL('image/jpeg', quality);
+        // Step the quality down until the data URL is a storage-friendly size.
+        let q = quality;
+        while (out.length > 350000 && q > 0.4) { q -= 0.1; out = canvas.toDataURL('image/jpeg', q); }
+        resolve(out);
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -1405,6 +1425,12 @@ function renderAdminProducts() {
 
 function openProductModal(editSlug = null) {
   const p = editSlug ? STORE.products.find(x => x.slug === editSlug) : null;
+  PHOTO_TARGET_SLUG = editSlug || null;
+  // Seed the manager with photos already saved on this product so they can be
+  // removed / replaced individually without resubmitting the product.
+  PHOTO_QUEUE = (p && Array.isArray(p.images) ? p.images : []).map((src, i) => ({
+    file: null, name: 'Photo ' + (i + 1), status: 'done', data: src, error: null, existing: true
+  }));
   const mc = document.getElementById('modalContainer');
 
   mc.innerHTML = `
@@ -1455,9 +1481,40 @@ function openProductModal(editSlug = null) {
           </div>
 
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Images (મલ્ટીપલ ફોટા પસંદ કરો - Min 5 Images Supported)</label>
-            <input id="pImageFile" type="file" accept="image/*" multiple class="admin-input text-xs" />
-            ${p && p.images ? `<p class="text-xs text-ivory-100/50 mt-1">હાલના ફોટા: ${p.images.length} Photos Attached</p>` : ''}
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Photos (સીધા ફોટા અપલોડ કરો · Max 8)</label>
+
+            <div id="pDropZone"
+                 ondragover="event.preventDefault(); this.classList.add('ring-2','ring-gold-400')"
+                 ondragleave="this.classList.remove('ring-2','ring-gold-400')"
+                 ondrop="handleProductPhotoDrop(event)"
+                 onclick="document.getElementById('pImageFile').click()"
+                 class="mt-1 cursor-pointer rounded-2xl border border-dashed border-gold-400/40 bg-white/5 px-4 py-6 text-center transition hover:bg-white/10">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-gold-300"></i>
+              <p class="mt-2 text-xs font-semibold text-ivory-100/80">ફોટા અહીં ડ્રોપ કરો અથવા ટેપ કરીને પસંદ કરો</p>
+              <p class="text-[0.68rem] text-ivory-100/45">JPG / PNG / HEIC · દરેક ફોટો આપોઆપ કોમ્પ્રેસ થશે</p>
+            </div>
+            <input id="pImageFile" type="file" accept="image/*" multiple onchange="handleProductPhotoSelect(event)" class="hidden" />
+            <input id="pReplaceFile" type="file" accept="image/*" class="hidden" onchange="handleProductPhotoReplaceFile(event)" />
+
+            <div id="pUploadProgress" class="mt-3 hidden">
+              <div class="flex items-center justify-between text-[0.7rem] font-semibold text-ivory-100/70">
+                <span id="pProgressText">Preparing photos...</span>
+                <span id="pProgressPct">0%</span>
+              </div>
+              <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div id="pProgressBar" class="h-full w-0 rounded-full bg-gold-400 transition-all duration-300"></div>
+              </div>
+              <ul id="pPhotoList" class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto"></ul>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" id="pRetryBtn" onclick="retryFailedProductPhotos()" class="btn-outline-luxury hidden !py-2 text-xs">
+                  <i class="fa-solid fa-rotate-right"></i> Retry failed photos only
+                </button>
+                <button type="button" id="pClearFailedBtn" onclick="removeAllFailedPhotos()" class="btn-outline-luxury hidden !py-2 text-xs">
+                  <i class="fa-solid fa-trash-can"></i> Remove failed photos
+                </button>
+              </div>
+              <p class="mt-2 text-[0.68rem] text-ivory-100/45">દરેક ફોટા પર Remove / Replace / Retry કરો - પ્રોડક્ટ ફરી સબમિટ કરવાની જરૂર નથી.</p>
+            </div>
           </div>
 
           <div class="flex items-center gap-4 pt-2">
@@ -1477,8 +1534,184 @@ function openProductModal(editSlug = null) {
   `;
 }
 
+
+// ------------- PHOTO MANAGER (progress + per-photo retry / remove / replace) -------------
+let PHOTO_QUEUE = [];          // [{ file, name, status, data, error, existing }]
+let PHOTO_TARGET_SLUG = null;  // product the photos belong to (set once saved)
+let PHOTO_REPLACE_INDEX = null;
+const MAX_PHOTOS = 8;
+
+function queueFiles(fileList) {
+  const room = MAX_PHOTOS - PHOTO_QUEUE.length;
+  if (room <= 0) { showToast('⚠️ વધુમાં વધુ ' + MAX_PHOTOS + ' ફોટા જ ઉમેરી શકાય.'); return; }
+  const files = Array.from(fileList || []).filter(f => f && f.type.startsWith('image/')).slice(0, room);
+  if (!files.length) return;
+  PHOTO_QUEUE = PHOTO_QUEUE.concat(files.map(f => ({ file: f, name: f.name, status: 'pending', data: null, error: null, existing: false })));
+  renderPhotoQueue();
+  processProductPhotos().then(() => syncPhotosToSavedProduct());
+}
+
+function handleProductPhotoSelect(e) {
+  queueFiles(e.target.files);
+  e.target.value = '';
+}
+
+function handleProductPhotoDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById('pDropZone');
+  if (dz) dz.classList.remove('ring-2', 'ring-gold-400');
+  queueFiles(e.dataTransfer && e.dataTransfer.files);
+}
+
+function renderPhotoQueue() {
+  const wrap = document.getElementById('pUploadProgress');
+  if (!wrap) return;
+  if (!PHOTO_QUEUE.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+
+  const done = PHOTO_QUEUE.filter(x => x.status === 'done').length;
+  const failed = PHOTO_QUEUE.filter(x => x.status === 'error').length;
+  const pct = Math.round((done / PHOTO_QUEUE.length) * 100);
+
+  document.getElementById('pProgressBar').style.width = pct + '%';
+  document.getElementById('pProgressPct').textContent = pct + '%';
+  document.getElementById('pProgressText').textContent =
+    failed ? `${done}/${PHOTO_QUEUE.length} ready · ${failed} failed`
+           : `${done}/${PHOTO_QUEUE.length} photos ready`;
+
+  const badge = {
+    pending: '<i class="fa-regular fa-clock text-ivory-100/50"></i>',
+    working: '<i class="fa-solid fa-spinner fa-spin text-gold-300"></i>',
+    done: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',
+    error: '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>'
+  };
+
+  document.getElementById('pPhotoList').innerHTML = PHOTO_QUEUE.map((it, i) => `
+    <li class="relative overflow-hidden rounded-xl border ${it.status === 'error' ? 'border-rose-400/50' : 'border-white/10'} bg-white/5">
+      <div class="aspect-square w-full bg-noir-950/40 flex items-center justify-center">
+        ${it.status === 'done' && it.data
+          ? `<img src="${it.data}" alt="${escapeHTML(it.name)}" class="h-full w-full object-cover" />`
+          : `<span class="text-xl">${badge[it.status]}</span>`}
+      </div>
+      <div class="flex items-center gap-1 px-1.5 py-1 text-[0.62rem] text-ivory-100/70">
+        ${badge[it.status]}<span class="flex-1 truncate">${escapeHTML(it.name)}</span>
+        ${i === 0 ? '<span class="rounded bg-gold-400/20 px-1 font-bold text-gold-300">MAIN</span>' : ''}
+      </div>
+      ${it.status === 'error' ? `<p class="px-1.5 pb-1 text-[0.6rem] text-rose-400 truncate">${escapeHTML(it.error || 'failed')}</p>` : ''}
+      <div class="flex border-t border-white/10 text-[0.6rem] font-bold">
+        ${it.status === 'error' ? `<button type="button" onclick="retryProductPhoto(${i})" class="flex-1 py-1.5 text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition">Retry</button>` : ''}
+        <button type="button" onclick="replaceProductPhoto(${i})" class="flex-1 py-1.5 text-ivory-100/80 hover:bg-white/15 transition">Replace</button>
+        <button type="button" onclick="removeProductPhoto(${i})" class="flex-1 py-1.5 text-rose-400 hover:bg-rose-500 hover:text-white transition">Remove</button>
+      </div>
+      ${i > 0 ? `<button type="button" title="Make main photo" onclick="makeMainProductPhoto(${i})" class="absolute right-1 top-1 rounded-md bg-noir-950/70 px-1.5 py-0.5 text-[0.6rem] font-bold text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition">★</button>` : ''}
+    </li>
+  `).join('');
+
+  const retryBtn = document.getElementById('pRetryBtn');
+  if (retryBtn) retryBtn.classList.toggle('hidden', failed === 0);
+  const clearBtn = document.getElementById('pClearFailedBtn');
+  if (clearBtn) clearBtn.classList.toggle('hidden', failed === 0);
+}
+
+async function processProductPhotos(indexes = null) {
+  const targets = indexes || PHOTO_QUEUE.map((_, i) => i).filter(i => PHOTO_QUEUE[i].status !== 'done');
+  for (const i of targets) {
+    const item = PHOTO_QUEUE[i];
+    if (!item || !item.file) continue;
+    item.status = 'working'; item.error = null; renderPhotoQueue();
+    try {
+      item.data = await compressImage(item.file, 900, 900, 0.72);
+      item.status = 'done';
+    } catch (err) {
+      item.status = 'error';
+      item.error = (err && err.message) ? err.message : 'Could not read file';
+      console.error('Photo failed:', item.name, err);
+    }
+    renderPhotoQueue();
+  }
+  return PHOTO_QUEUE.filter(x => x.status === 'error').length;
+}
+
+// Retry a single failed photo without touching the rest of the form.
+async function retryProductPhoto(index) {
+  await processProductPhotos([index]);
+  syncPhotosToSavedProduct();
+}
+
+// Retry every failed photo only - the product itself is never resubmitted.
+async function retryFailedProductPhotos() {
+  const failedIdx = PHOTO_QUEUE.map((x, i) => x.status === 'error' ? i : -1).filter(i => i >= 0);
+  if (!failedIdx.length) return;
+  const stillFailed = await processProductPhotos(failedIdx);
+  syncPhotosToSavedProduct();
+  showToast(stillFailed ? `⚠️ ${stillFailed} ફોટા હજી નિષ્ફળ છે.` : '✓ બાકીના ફોટા ઉમેરાઈ ગયા!');
+}
+
+// Remove one photo (failed or unwanted) - saved product updates instantly.
+function removeProductPhoto(index) {
+  if (!PHOTO_QUEUE[index]) return;
+  PHOTO_QUEUE.splice(index, 1);
+  renderPhotoQueue();
+  syncPhotosToSavedProduct();
+  showToast('✓ ફોટો દૂર થયો');
+}
+
+function removeAllFailedPhotos() {
+  const before = PHOTO_QUEUE.length;
+  PHOTO_QUEUE = PHOTO_QUEUE.filter(x => x.status !== 'error');
+  renderPhotoQueue();
+  syncPhotosToSavedProduct();
+  showToast(`✓ ${before - PHOTO_QUEUE.length} નિષ્ફળ ફોટા દૂર થયા`);
+}
+
+// Replace exactly one photo - picks a new file for that slot only.
+function replaceProductPhoto(index) {
+  PHOTO_REPLACE_INDEX = index;
+  const input = document.getElementById('pReplaceFile');
+  if (input) { input.value = ''; input.click(); }
+}
+
+async function handleProductPhotoReplaceFile(e) {
+  const file = e.target.files && e.target.files[0];
+  const index = PHOTO_REPLACE_INDEX;
+  PHOTO_REPLACE_INDEX = null;
+  e.target.value = '';
+  if (!file || index === null || !PHOTO_QUEUE[index]) return;
+  PHOTO_QUEUE[index] = { file, name: file.name, status: 'pending', data: null, error: null, existing: false };
+  renderPhotoQueue();
+  await processProductPhotos([index]);
+  syncPhotosToSavedProduct();
+  showToast(PHOTO_QUEUE[index].status === 'done' ? '✓ ફોટો બદલાઈ ગયો' : '❌ નવો ફોટો પણ નિષ્ફળ - ફરી ટ્રાય કરો');
+}
+
+function makeMainProductPhoto(index) {
+  if (index <= 0 || !PHOTO_QUEUE[index]) return;
+  const [item] = PHOTO_QUEUE.splice(index, 1);
+  PHOTO_QUEUE.unshift(item);
+  renderPhotoQueue();
+  syncPhotosToSavedProduct();
+}
+
+// If the product row already exists, push the current photo set straight to it.
+function syncPhotosToSavedProduct() {
+  if (!PHOTO_TARGET_SLUG) return;
+  const prod = STORE.products.find(x => x.slug === PHOTO_TARGET_SLUG);
+  if (!prod) return;
+  const good = PHOTO_QUEUE.filter(x => x.status === 'done' && x.data).map(x => x.data);
+  prod.images = good.length ? good : ['1.jpeg','2.jpeg','3.jpeg','4.jpeg','5.jpeg'];
+  saveStore('products');
+  render();
+}
+
 async function saveProductForm(e, existingSlug) {
   e.preventDefault();
+  const submitBtn = e.target ? e.target.querySelector('button[type=submit]') : null;
+  if (submitBtn) {
+    if (submitBtn.disabled) return;           // block double submits
+    submitBtn.disabled = true;
+    submitBtn.dataset.label = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
   try {
     const name = document.getElementById('pName').value.trim();
     const cat = document.getElementById('pCat').value;
@@ -1488,17 +1721,26 @@ async function saveProductForm(e, existingSlug) {
     const material = document.getElementById('pMaterial').value.trim();
     const desc = document.getElementById('pDesc').value.trim();
     const featured = document.getElementById('pFeatured').checked;
-    const imgFiles = document.getElementById('pImageFile').files;
+    const imgInput = document.getElementById('pImageFile');
+    const imgFiles = imgInput ? imgInput.files : null;
+    // Photos chosen but queue not built yet (e.g. programmatic fill) - build it now.
+    if (imgFiles && imgFiles.length && !PHOTO_QUEUE.length) {
+      PHOTO_QUEUE = Array.from(imgFiles).slice(0, MAX_PHOTOS).map(f => ({ file: f, name: f.name, status: 'pending', data: null, error: null, existing: false }));
+      renderPhotoQueue();
+    }
 
     let imageSrcs = existingSlug ? (STORE.products.find(x => x.slug === existingSlug)?.images || ['1.jpeg','2.jpeg','3.jpeg','4.jpeg','5.jpeg']) : ['1.jpeg','2.jpeg','3.jpeg','4.jpeg','5.jpeg'];
 
-    if (imgFiles && imgFiles.length > 0) {
-      const compressedList = [];
-      for (let i = 0; i < imgFiles.length; i++) {
-        const comp = await compressImage(imgFiles[i], 1200, 1200, 0.88);
-        compressedList.push(comp);
-      }
-      imageSrcs = compressedList;
+    if (!name) { showToast('❌ પ્રોડક્ટનું નામ જરૂરી છે.'); return; }
+    if (!isFinite(price)) { showToast('❌ કિંમત યોગ્ય રીતે ભરો.'); return; }
+
+    let failedCount = 0;
+    if (PHOTO_QUEUE.length) {
+      if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing photos...';
+      failedCount = await processProductPhotos();   // only handles not-yet-done items
+      const good = PHOTO_QUEUE.filter(x => x.status === 'done').map(x => x.data);
+      if (good.length) imageSrcs = good;
+      else showToast('⚠️ કોઈ ફોટો પ્રોસેસ ન થયો - ડિફોલ્ટ ફોટા વપરાયા.');
     }
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -1519,12 +1761,25 @@ async function saveProductForm(e, existingSlug) {
     }
 
     saveStore('products');
-    closeModal();
-    showToast('✓ પ્રોડક્ટ સફળતાપૂર્વક સેવ થઈ ગઈ!');
+    PHOTO_TARGET_SLUG = slug;
     render();
+
+    if (failedCount > 0) {
+      // Product is saved - keep the modal open so ONLY the failed photos can be retried.
+      showToast(`✓ પ્રોડક્ટ સેવ થઈ · ${failedCount} ફોટા નિષ્ફળ - તેને Retry / Replace / Remove કરો.`);
+      renderPhotoQueue();
+    } else {
+      closeModal();
+      showToast('✓ પ્રોડક્ટ સફળતાપૂર્વક સેવ થઈ ગઈ!');
+    }
   } catch (err) {
     console.error('Save product error:', err);
-    showToast('❌ સેવ કરવામાં ભૂલ આવી. ફરી પ્રયાસ કરો.');
+    showToast('❌ સેવ કરવામાં ભૂલ: ' + (err && err.message ? err.message : err));
+  } finally {
+    if (submitBtn && document.body.contains(submitBtn)) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = submitBtn.dataset.label || 'Save Product';
+    }
   }
 }
 
@@ -2067,6 +2322,8 @@ function renderAdminBackup() {
 }
 
 function closeModal() {
+  PHOTO_QUEUE = [];
+  PHOTO_TARGET_SLUG = null;
   document.getElementById('modalContainer').innerHTML = '';
 }
 
