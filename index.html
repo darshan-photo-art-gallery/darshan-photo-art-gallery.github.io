@@ -559,6 +559,10 @@ function escapeHTML(str) {
   }[tag] || tag));
 }
 
+// SHA-256 digest of the initial admin password (no plain text in source).
+// Frontend-only protection: not a substitute for server-side authentication.
+const DEFAULT_ADMIN_HASH = '0b851c70c888aaa33b0295d10cb9504c12766a0c4d4dee2f89f229946ece263e';
+
 // SHA-256 Web Crypto Hashing for Admin Passwords
 async function hashPassword(pwd) {
   const encoder = new TextEncoder();
@@ -923,13 +927,62 @@ function renderHome() {
   `;
 }
 
+
+// ============================================================
+// RELATED / SUGGESTED PRODUCTS
+// ============================================================
+function getRelatedProducts(opts) {
+  const { categorySlug = '', excludeSlugs = [], limit = 8 } = opts || {};
+  const all = (STORE.products || []).filter(p => p && p.slug && !excludeSlugs.includes(p.slug));
+  const catName = (STORE.categories.find(c => c.slug === categorySlug)?.name || categorySlug || '').toLowerCase();
+  const words = catName.split(/[^a-z]+/).filter(w => w.length > 3);
+
+  const score = (p) => {
+    let sc = 0;
+    if (categorySlug && p.category === categorySlug) sc += 100;
+    const hay = `${p.name || ''} ${p.shortDesc || ''} ${p.material || ''} ${p.category || ''}`.toLowerCase();
+    words.forEach(w => { if (hay.includes(w)) sc += 20; });
+    if (p.bestSeller) sc += 6;
+    if (p.featured) sc += 4;
+    if (p.trending) sc += 3;
+    sc += (Number(p.rating) || 0);
+    return sc;
+  };
+
+  const seen = new Set();
+  return all
+    .map(p => ({ p, sc: score(p) }))
+    .filter(x => x.sc > 0)
+    .sort((a, b) => b.sc - a.sc)
+    .map(x => x.p)
+    .filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+    .slice(0, limit);
+}
+
+function renderSuggestedSection(list, heading, sub) {
+  if (!list || !list.length) return '';
+  return `
+    <section class="mt-14 border-t border-white/10 pt-10">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <span class="section-eyebrow">${escapeHTML(sub || 'You may also like')}</span>
+          <h2 class="mt-2 font-display text-2xl font-bold text-gradient-gold sm:text-3xl">${escapeHTML(heading)}</h2>
+        </div>
+      </div>
+      <div class="mt-6 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        ${list.map((p, i) => renderProductCard(p, i)).join('')}
+      </div>
+    </section>
+  `;
+}
+
 function renderProductCard(p, i) {
   const d = discount(p.price, p.offerPrice);
   return `
     <div class="product-card group relative overflow-hidden rounded-3xl glass-panel transition-all duration-500 hover:-translate-y-2 reveal reveal-d${(i%4)+1}">
       <div class="relative aspect-[4/5] overflow-hidden bg-noir-800 rounded-t-3xl">
         <a href="#/product/${escapeHTML(p.slug)}">
-          <img src="${escapeHTML(p.images[0])}" alt="${escapeHTML(p.name)}" class="product-img w-full h-full object-cover" loading="lazy" />
+          <img src="${escapeHTML(safeMediaUrl((p.images && p.images[0]) || ''))}" alt="${escapeHTML(p.name)}" class="product-img w-full h-full object-cover" loading="lazy" onerror="this.onerror=null;this.style.opacity='0.3'" />
         </a>
         ${d > 0 ? `<span class="absolute left-3 top-3 rounded-full bg-gold-metallic px-3 py-1 text-[0.65rem] font-bold text-noir-950 shadow-lg">-${d}% OFF</span>` : ''}
         <div class="absolute right-3 top-3 flex flex-col gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -1028,6 +1081,16 @@ function renderCatalog(categorySlug) {
         `}
       </div>
 
+      ${(() => {
+        if (!categorySlug) return '';
+        const suggestions = getRelatedProducts({
+          categorySlug,
+          excludeSlugs: products.map(p => p.slug),
+          limit: 8
+        });
+        return renderSuggestedSection(suggestions, 'Related Collections', 'Suggested for you');
+      })()}
+
     </div>
   `;
 }
@@ -1049,24 +1112,21 @@ function renderProduct(slug) {
         <div class="flex flex-col gap-4">
           <!-- MAIN HERO IMAGE (Square 1:1 / 4:5 Amazon Aspect Ratio Container) -->
           <div class="relative group aspect-square sm:aspect-[4/5] w-full overflow-hidden rounded-3xl glass-panel p-2 flex items-center justify-center bg-noir-900 border border-gold-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
-            <img id="prodMainImg" src="${escapeHTML(images[0])}" alt="${escapeHTML(p.name)}" class="h-full w-full object-cover rounded-2xl cursor-zoom-in transition-transform duration-500 group-hover:scale-105" onclick="openMediaLightbox('${escapeHTML(images[0])}', 'image', '${escapeHTML(p.name)}', ${JSON.stringify(images).replace(/"/g, '&quot;')}, currentProductImgIndex)" />
+            <img id="prodMainImg" src="${escapeHTML(images[0])}" alt="${escapeHTML(p.name)}" class="h-full w-full object-contain rounded-2xl cursor-pointer transition-transform duration-500 group-hover:scale-[1.03]" onerror="this.onerror=null;this.style.opacity='0.35'" onclick="openMediaLightbox(this.src, 'image', '${escapeHTML(p.name)}', ${JSON.stringify(images).replace(/"/g, '&quot;')}, currentProductImgIndex)" />
             
             ${discount(p.price, p.offerPrice) > 0 ? `<span class="absolute left-4 top-4 rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950 shadow-lg">-${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
 
-            <button onclick="openMediaLightbox(document.getElementById('prodMainImg').src, 'image', '${escapeHTML(p.name)}', ${JSON.stringify(images).replace(/"/g, '&quot;')}, currentProductImgIndex)" class="absolute right-4 bottom-4 flex items-center gap-2 rounded-full bg-noir-950/85 px-3.5 py-2 text-xs font-bold text-gold-300 backdrop-blur-md border border-gold-400/40 shadow-xl transition hover:bg-gold-400 hover:text-noir-950">
-              <i class="fa-solid fa-magnifying-glass-plus text-xs"></i> <span>Full Screen (ઝૂમ કરો)</span>
-            </button>
           </div>
 
           <!-- THUMBNAIL RIBBON (Minimum 5 Images per product) -->
           <div class="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
             ${images.map((img, idx) => `
               <button onclick="selectProductThumb('${escapeHTML(img)}', ${idx})" class="prod-thumb-btn relative flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-2xl glass-panel p-1 transition-all duration-300 ${idx === 0 ? 'border-2 border-gold-400 scale-105 shadow-[0_0_15px_rgba(212,168,51,0.5)]' : 'border border-white/20 opacity-70 hover:opacity-100'}" data-index="${idx}">
-                <img src="${escapeHTML(img)}" alt="Thumbnail ${idx+1}" class="h-full w-full object-cover rounded-xl" />
+                <img src="${escapeHTML(safeMediaUrl(img))}" alt="Thumbnail ${idx+1}" loading="lazy" onerror="this.onerror=null;this.style.opacity='0.3'" class="h-full w-full object-cover rounded-xl" />
               </button>
             `).join('')}
           </div>
-          <p class="text-[0.7rem] text-ivory-100/50 text-center font-gujarati">💡 ફોટો બદલવા માટે થંબનેલ પર ક્લિક કરો · ફુલ સ્ક્રીન જોવા માટે ઇમેજ પર ટૅપ કરો</p>
+          <p class="text-[0.7rem] text-ivory-100/50 text-center font-gujarati">💡 ફોટો બદલવા માટે થંબનેલ પર ક્લિક કરો · મોટો જોવા માટે ઇમેજ પર ટૅપ કરો</p>
         </div>
 
         <!-- PRODUCT DETAILS -->
@@ -1094,6 +1154,12 @@ function renderProduct(slug) {
           </div>
         </div>
       </div>
+
+      ${renderSuggestedSection(
+        getRelatedProducts({ categorySlug: p.category, excludeSlugs: [p.slug], limit: 4 }),
+        'Similar Masterpieces',
+        'You may also like'
+      )}
     </div>
   `;
 }
@@ -2367,24 +2433,20 @@ async function adminLogin(e) {
     return;
   }
   
+  // NOTE: this is a frontend-only gate. No plain-text password is stored in the
+  // source; only a SHA-256 digest is compared. A static site cannot keep any
+  // secret truly private — use a backend/serverless auth service for real security.
   const storedHash = localStorage.getItem('dpag_admin_hash');
-  const storedPass = localStorage.getItem('dpag_admin_pass');
   const inputHash = await hashPassword(p);
-
-  // Master password fallback + stored hash/pass verification
-  const isValidPass = 
-    p === 'Darshan@2026' || 
-    (storedPass && p === storedPass) || 
-    (storedHash && inputHash === storedHash);
+  const isValidPass = (storedHash ? inputHash === storedHash : inputHash === DEFAULT_ADMIN_HASH);
 
   if (u === 'admin' && isValidPass) {
     STORE.adminUser = { username: 'admin', loginTime: Date.now() };
     localStorage.setItem('dpag_admin', JSON.stringify(STORE.adminUser));
     
     // Update hash for currently valid password
-    const newHash = await hashPassword(p);
-    localStorage.setItem('dpag_admin_hash', newHash);
-    localStorage.setItem('dpag_admin_pass', p);
+    localStorage.setItem('dpag_admin_hash', inputHash);
+    localStorage.removeItem('dpag_admin_pass');
     
     render();
   } else {
@@ -2467,58 +2529,85 @@ function initAfterRender() {
 let currentGalleryList = [];
 let currentGalleryIndex = 0;
 
+function normalizeMediaItem(it, fallbackTitle = '') {
+  if (typeof it === 'string') {
+    return { url: it, type: /\.(mp4|webm|mov)$/i.test(it) ? 'video' : 'image', title: fallbackTitle };
+  }
+  if (it && typeof it === 'object') {
+    const url = it.url || it.mediaUrl || it.image || it.src || '';
+    return { url, type: it.type || it.mediaType || (/\.(mp4|webm|mov)$/i.test(url) ? 'video' : 'image'), title: it.title || fallbackTitle };
+  }
+  return { url: '', type: 'image', title: fallbackTitle };
+}
+
+// Safe URL for images: keeps relative GitHub Pages paths intact but encodes
+// spaces / special characters, and leaves data: & absolute URLs untouched.
+function safeMediaUrl(u) {
+  if (!u) return '';
+  u = String(u).trim();
+  if (/^(data:|blob:|https?:)/i.test(u)) return u;
+  try { return u.split('/').map(part => encodeURIComponent(decodeURIComponent(part))).join('/'); }
+  catch (e) { return u; }
+}
+
 function openMediaLightbox(mediaUrl, mediaType = 'image', title = '', list = [], index = 0) {
-  currentGalleryList = (list && list.length) ? list : [{ url: mediaUrl, type: mediaType, title: title }];
-  currentGalleryIndex = index;
+  const arr = (list && list.length) ? list.map(it => normalizeMediaItem(it, title)) : [];
+  currentGalleryList = arr.length ? arr : [normalizeMediaItem(mediaUrl, title)];
+  // Always show the exact clicked media
+  let i = Number(index);
+  if (!Number.isInteger(i) || i < 0 || i >= currentGalleryList.length) i = 0;
+  if (mediaUrl && currentGalleryList[i] && currentGalleryList[i].url !== mediaUrl) {
+    const found = currentGalleryList.findIndex(x => x.url === mediaUrl);
+    if (found > -1) i = found;
+    else { currentGalleryList = [normalizeMediaItem(mediaUrl, title)]; i = 0; }
+  }
+  currentGalleryIndex = i;
+  document.body.style.overflow = 'hidden';
   renderMediaLightbox();
 }
 
 function renderMediaLightbox() {
   const item = currentGalleryList[currentGalleryIndex] || { url: '', type: 'image', title: '' };
   const mc = document.getElementById('modalContainer');
-  const isVideo = item.type === 'video' || (item.url && item.url.match(/\.(mp4|webm|mov)$/i));
+  const url = safeMediaUrl(item.url);
+  const isVideo = item.type === 'video' || /\.(mp4|webm|mov)$/i.test(item.url || '');
 
   mc.innerHTML = `
-    <div id="mediaLightbox" class="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-2xl p-4 sm:p-6 animate-page-entry text-white select-none">
+    <div id="mediaLightbox" onclick="if(event.target===this) closeMediaLightbox()" class="lightbox-fade fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-2xl p-4 sm:p-6 text-white select-none">
       <!-- TOP BAR -->
-      <div class="flex items-center justify-between z-10 py-2">
-        <div class="flex items-center gap-3">
-          <span class="rounded-full bg-gold-400/20 px-3 py-1 text-xs font-bold text-gold-300 border border-gold-400/40">
+      <div class="flex items-center justify-between z-10 py-2 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="rounded-full bg-gold-400/20 px-3 py-1 text-xs font-bold text-gold-300 border border-gold-400/40 whitespace-nowrap">
             ${currentGalleryList.length > 1 ? `${currentGalleryIndex + 1} / ${currentGalleryList.length}` : (isVideo ? '🎬 Video' : '🖼️ Photo')}
           </span>
-          <h3 class="font-display text-sm sm:text-base font-semibold text-ivory-100 truncate max-w-[200px] sm:max-w-md">${escapeHTML(item.title || '')}</h3>
+          <h3 class="font-display text-sm sm:text-base font-semibold text-ivory-100 truncate max-w-[150px] sm:max-w-md">${escapeHTML(item.title || '')}</h3>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="toggleFullscreen()" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-ivory-100 hover:bg-gold-400 hover:text-noir-950 transition" title="Toggle Fullscreen">
-            <i class="fa-solid fa-expand text-sm"></i>
-          </button>
-          <button onclick="closeMediaLightbox()" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-ivory-100 hover:bg-rose-500 hover:text-white transition" title="Close">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
-        </div>
+        <button onclick="closeMediaLightbox()" aria-label="Close preview" class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 border border-white/20 text-ivory-100 hover:bg-rose-500 hover:text-white transition" title="Close (ESC)">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
       </div>
 
       <!-- MAIN MEDIA CONTAINER -->
-      <div class="relative flex-1 flex items-center justify-center overflow-hidden my-4">
+      <div class="relative flex-1 flex items-center justify-center overflow-hidden my-3" onclick="if(event.target===this) closeMediaLightbox()">
         ${currentGalleryList.length > 1 ? `
-          <button onclick="navLightbox(-1)" class="absolute left-2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-noir-950/80 border border-gold-400/40 text-gold-300 backdrop-blur-md hover:bg-gold-400 hover:text-noir-950 transition">
+          <button onclick="event.stopPropagation();navLightbox(-1)" aria-label="Previous" class="absolute left-1 sm:left-2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-noir-950/80 border border-gold-400/40 text-gold-300 backdrop-blur-md hover:bg-gold-400 hover:text-noir-950 transition">
             <i class="fa-solid fa-chevron-left text-lg"></i>
           </button>
-          <button onclick="navLightbox(1)" class="absolute right-2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-noir-950/80 border border-gold-400/40 text-gold-300 backdrop-blur-md hover:bg-gold-400 hover:text-noir-950 transition">
+          <button onclick="event.stopPropagation();navLightbox(1)" aria-label="Next" class="absolute right-1 sm:right-2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-noir-950/80 border border-gold-400/40 text-gold-300 backdrop-blur-md hover:bg-gold-400 hover:text-noir-950 transition">
             <i class="fa-solid fa-chevron-right text-lg"></i>
           </button>
         ` : ''}
 
         ${isVideo ? `
-          <video src="${escapeHTML(item.url)}" controls autoplay playsinline loop class="max-h-[82vh] max-w-[95vw] rounded-2xl shadow-[0_0_50px_rgba(212,168,51,0.25)] border border-gold-400/30"></video>
+          <video src="${escapeHTML(url)}" controls autoplay playsinline loop class="max-h-[78vh] max-w-[92vw] object-contain rounded-2xl shadow-[0_0_50px_rgba(212,168,51,0.25)] border border-gold-400/30"></video>
         ` : `
-          <img src="${escapeHTML(item.url)}" alt="${escapeHTML(item.title || '')}" class="max-h-[82vh] max-w-[95vw] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-white/10" />
+          <img src="${escapeHTML(url)}" alt="${escapeHTML(item.title || 'Preview')}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="100%" height="100%" fill="#12100c"/><text x="50%" y="50%" fill="#d4a833" font-family="sans-serif" font-size="26" text-anchor="middle">Image unavailable</text></svg>')}'" class="max-h-[78vh] max-w-[92vw] w-auto h-auto object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-white/10" />
         `}
       </div>
 
-      <!-- BOTTOM CAPTION / CONTROL -->
+      <!-- BOTTOM CAPTION -->
       <div class="text-center py-2 text-xs text-ivory-100/60 font-gujarati">
-        ${isVideo ? '▶ વિડિયો પ્લે થઈ રહ્યો છે (Full Screen મોડમાં જુઓ)' : '🔍 ફોટો મોટો કરીને જોવા માટે ઝૂમ કરો'}
+        ${isVideo ? '▶ વિડિયો પ્લે થઈ રહ્યો છે' : 'બંધ કરવા ✕ દબાવો અથવા ESC કી વાપરો'}
       </div>
     </div>
   `;
@@ -2531,17 +2620,20 @@ function navLightbox(dir) {
 }
 
 function closeMediaLightbox() {
-  document.getElementById('modalContainer').innerHTML = '';
+  const mc = document.getElementById('modalContainer');
+  if (mc) mc.innerHTML = '';
+  document.body.style.overflow = '';
 }
 
-function toggleFullscreen() {
-  const el = document.getElementById('mediaLightbox');
-  if (!document.fullscreenElement) {
-    if (el.requestFullscreen) el.requestFullscreen();
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  } else {
-    if (document.exitFullscreen) document.exitFullscreen();
-  }
+// Single global ESC handler (no duplicate listeners)
+if (!window.__dpagLightboxKeys) {
+  window.__dpagLightboxKeys = true;
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('mediaLightbox')) return;
+    if (e.key === 'Escape') closeMediaLightbox();
+    else if (e.key === 'ArrowLeft') navLightbox(-1);
+    else if (e.key === 'ArrowRight') navLightbox(1);
+  });
 }
 
 function openLightbox(src) {
