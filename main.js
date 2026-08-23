@@ -14,6 +14,15 @@ function navigate(path) {
   window.location.hash = target;
 }
 
+function getCategoryLabel(catSlug) {
+  if (!catSlug) return 'General';
+  const c = (STORE.categories || []).find(x => x.slug === catSlug || x.name === catSlug || (x.slug && catSlug && x.slug.toLowerCase() === catSlug.toLowerCase()));
+  if (c) {
+    return c.name + (c.nameGu ? ` (${c.nameGu})` : '');
+  }
+  return String(catSlug).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 // ---------------- RENDER VIEWS ----------------
 
 function renderHome() {
@@ -205,7 +214,7 @@ function renderProduct(slug) {
         </div>
 
         <div class="flex flex-col justify-center">
-          <span class="section-eyebrow font-gujarati">${escapeHTML(p.category)}</span>
+          <span class="section-eyebrow font-gujarati">${escapeHTML(getCategoryLabel(p.category))}</span>
           <h1 class="mt-3 font-display text-3xl font-bold text-ivory-50 sm:text-4xl md:text-5xl">${escapeHTML(p.name)}</h1>
           
           <div class="mt-6 flex items-center gap-4">
@@ -520,7 +529,11 @@ function renderAdminProducts() {
                   <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover border border-gold-400/30" />
                 </td>
                 <td class="p-3 font-semibold text-ivory-100">${escapeHTML(p.name)}</td>
-                <td class="p-3 text-xs text-ivory-100/70">${escapeHTML(p.category)}</td>
+                <td class="p-3 text-xs">
+                  <span class="rounded-full bg-gold-400/15 px-3 py-1 text-gold-300 font-semibold border border-gold-400/30 whitespace-nowrap">
+                    ${escapeHTML(getCategoryLabel(p.category))}
+                  </span>
+                </td>
                 <td class="p-3 text-ivory-100/60 line-through">${formatPrice(p.price)}</td>
                 <td class="p-3 font-bold text-gold-300">${formatPrice(p.offerPrice || p.price)}</td>
                 <td class="p-3"><span class="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400 font-semibold">${p.stock || 50}</span></td>
@@ -573,7 +586,10 @@ function openProductModal(editSlug = null) {
             <div>
               <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category</label>
               <select id="pCat" class="admin-input">
-                ${STORE.categories.map(c => `<option value="${escapeHTML(c.slug)}" ${p && p.category === c.slug ? 'selected' : ''}>${escapeHTML(c.name)}</option>`).join('')}
+                ${STORE.categories.map(c => {
+                  const isSelected = p && (p.category === c.slug || p.category === c.name || (p.category && c.slug && p.category.toLowerCase() === c.slug.toLowerCase()));
+                  return `<option value="${escapeHTML(c.slug)}" ${isSelected ? 'selected' : ''}>${escapeHTML(c.name)} ${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</option>`;
+                }).join('')}
               </select>
             </div>
             <div>
@@ -713,7 +729,7 @@ async function processProductPhotos(indexes = null) {
     if (!item || !item.file) continue;
     item.status = 'working'; item.error = null; renderPhotoQueue();
     try {
-      item.data = await compressImage(item.file, 900, 900, 0.72);
+      item.data = await compressImage(item.file, 600, 600, 0.65);
       item.status = 'done';
     } catch (err) {
       item.status = 'error';
@@ -924,7 +940,7 @@ async function saveCategoryForm(e, existingSlug) {
 
     const existingCat = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
     let cover = existingCat ? existingCat.cover : 'images/products/3.jpeg';
-    if (file) cover = await compressImage(file, 1200, 1200, 0.88);
+    if (file) cover = await compressImage(file, 600, 600, 0.65);
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
@@ -1049,7 +1065,7 @@ async function saveOfferForm(e, existingIdx) {
 
     const existingOffer = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null') ? STORE.offers[existingIdx] : null;
     let image = existingOffer ? existingOffer.image : 'images/products/16.jpeg';
-    if (file) image = await compressImage(file, 1200, 1200, 0.88);
+    if (file) image = await compressImage(file, 600, 600, 0.65);
 
     const offerData = { id: existingOffer ? existingOffer.id : ('off-' + Date.now()), title, badge, description: desc, image };
 
@@ -1141,7 +1157,7 @@ async function saveGalleryForm(e) {
   const file = document.getElementById('gFile').files?.[0];
   if (!file) return;
 
-  const image = await compressImage(file, 900, 900, 0.85);
+  const image = await compressImage(file, 600, 600, 0.65);
   STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
   saveStore('gallery');
   closeModal();
@@ -1580,6 +1596,7 @@ if (typeof window !== 'undefined') {
   window.getRoute = getRoute;
   window.navigate = navigate;
   window.render = render;
+  window.getCategoryLabel = getCategoryLabel;
   window.setAdminTab = setAdminTab;
   window.renderAdmin = renderAdmin;
   window.renderAdminProducts = renderAdminProducts;
