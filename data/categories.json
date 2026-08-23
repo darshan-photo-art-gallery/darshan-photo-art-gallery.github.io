@@ -1,0 +1,56 @@
+[
+  {
+    "slug": "religious-frames",
+    "name": "Wall Temple Frames",
+    "nameGu": "વોલ ટેમ્પલ ફ્રેમ્સ",
+    "description": "Divine gold-finished frames crafted for gods, goddesses & spiritual portraits.",
+    "cover": "images/products/3.jpeg",
+    "icon": "fa-om",
+    "featured": true
+  },
+  {
+    "slug": "mataji-frames",
+    "name": "Paat (Bajot)",
+    "nameGu": "ભુવાજી પાટ",
+    "description": "Handcrafted devotional frames dedicated to Mataji with intricate gold carving.",
+    "cover": "images/gallery/ramdev.png",
+    "icon": "fa-hands-praying",
+    "featured": true
+  },
+  {
+    "slug": "temple-decoration",
+    "name": "Photo Frames",
+    "nameGu": "ફોટો ફ્રેમ",
+    "description": "Complete home mandir décor sets, arches, LED diyas & backdrop panels.",
+    "cover": "images/products/11.jpeg",
+    "icon": "fa-place-of-worship",
+    "featured": true
+  },
+  {
+    "slug": "led-frames",
+    "name": "Heavy Lighting Photos",
+    "nameGu": "હેવી લાઇટ્ટિંગ ફોટા",
+    "description": "Illuminated backlit frames that glow softly for a magical ambience.",
+    "cover": "images/products/13.jpeg",
+    "icon": "fa-lightbulb",
+    "featured": true
+  },
+  {
+    "slug": "diamond-frames",
+    "name": "LED Frames",
+    "nameGu": "LED ફ્રેમ્સ",
+    "description": "Studded with sparkling stones for a truly opulent, jewel-like finish.",
+    "cover": "images/products/16.jpeg",
+    "icon": "fa-gem",
+    "featured": true
+  },
+  {
+    "slug": "wooden-frames",
+    "name": "Wooden Frames",
+    "nameGu": "લાકડાની ફ્રેમ્સ",
+    "description": "Solid hand-carved wooden frames finished with a rich walnut lacquer.",
+    "cover": "images/products/20.jpeg",
+    "icon": "fa-tree",
+    "featured": true
+  }
+]

@@ -2,27 +2,32 @@
 <urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darshanphotoartgallery.com/</loc>
-    <lastmod>2026-08-15</lastmod>
+    <lastmod>2026-08-23</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://darshanphotoartgallery.com/#/catalog</loc>
+    <loc>https://darshanphotoartgallery.com/products.html</loc>
+    <lastmod>2026-08-23</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://darshanphotoartgallery.com/#/gallery</loc>
+    <loc>https://darshanphotoartgallery.com/gallery.html</loc>
+    <lastmod>2026-08-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://darshanphotoartgallery.com/#/offers</loc>
+    <loc>https://darshanphotoartgallery.com/offers.html</loc>
+    <lastmod>2026-08-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://darshanphotoartgallery.com/#/about</loc>
+    <loc>https://darshanphotoartgallery.com/about.html</loc>
+    <lastmod>2026-08-23</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darshanphotoartgallery.com/#/contact</loc>
+    <loc>https://darshanphotoartgallery.com/contact.html</loc>
+    <lastmod>2026-08-23</lastmod>
     <priority>0.9</priority>
   </url>
 </urlset>

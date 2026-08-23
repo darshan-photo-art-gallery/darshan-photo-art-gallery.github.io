@@ -1,0 +1,18 @@
+[
+  {
+    "id": "off-1",
+    "title": "Diwali Divine Collection",
+    "description": "Flat 30% off on all Religious & Temple Decoration frames.",
+    "badge": "FESTIVAL OFFER",
+    "discount": "30% OFF",
+    "image": "images/products/16.jpeg"
+  },
+  {
+    "id": "off-2",
+    "title": "Buy 2 Get 1 Free — Family Frames",
+    "description": "Purchase any two family frames and receive a premium frame free.",
+    "badge": "COMBO OFFER",
+    "discount": "BUY 2 GET 1",
+    "image": "images/products/17.jpeg"
+  }
+]

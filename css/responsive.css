@@ -1,0 +1,108 @@
+/* ============================================================
+   DARSHAN PHOTO ART GALLERY — RESPONSIVE STYLES (responsive.css)
+   ============================================================ */
+
+/* Hero Buttons — Mobile 2-col grid, Desktop flex row */
+.hero-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 390px;
+  margin: 2.5rem auto 0;
+  padding: 0 0.5rem;
+}
+.hero-btns > a:first-child { grid-column: 1 / -1; }
+.hero-btns > a {
+  min-height: 52px;
+  justify-content: center;
+  font-size: 0.8rem;
+  padding: 0.85rem 1rem !important;
+}
+
+@media (min-width: 640px) {
+  .hero-btns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: none;
+    padding: 0;
+    margin-top: 2.5rem;
+  }
+  .hero-btns > a:first-child { grid-column: auto; }
+  .hero-btns > a { min-height: auto; padding: 0.95rem 2.25rem !important; }
+  .hero-btns > a.btn-outline-luxury,
+  .hero-btns > a.btn-call-luxury { padding: 0.9rem 2.1rem !important; }
+}
+
+/* Touch Active Feedback States */
+@media (hover: none) and (pointer: coarse) {
+  .btn-luxury:active {
+    transform: scale(0.94) !important;
+    filter: brightness(1.1);
+    transition: transform 0.1s ease !important;
+  }
+  .btn-outline-luxury:active {
+    transform: scale(0.94) !important;
+    background: rgba(227,190,81,0.22) !important;
+    border-color: var(--color-gold-300) !important;
+    transition: all 0.1s ease !important;
+  }
+  .btn-call-luxury:active {
+    transform: scale(0.94) !important;
+    transition: transform 0.1s ease !important;
+  }
+  .btn-call-luxury:active::before { opacity: 1 !important; }
+  .btn-call-luxury:active span, .btn-call-luxury:active i { color: var(--color-noir-950) !important; }
+  .product-card:active {
+    transform: translateY(-2px) scale(0.982) !important;
+    transition: transform 0.15s ease !important;
+  }
+  .glass-panel:active {
+    border-color: rgba(227,190,81,0.5) !important;
+    transition: border-color 0.15s ease !important;
+  }
+}
+
+/* Mobile Section Spacing */
+@media (max-width: 639px) {
+  .py-24 { padding-top: 3.5rem !important; padding-bottom: 3.5rem !important; }
+  .pt-28 { padding-top: 4.5rem !important; }
+  .pb-20 { padding-bottom: 2.5rem !important; }
+  h1.font-display { line-height: 1.1 !important; }
+  .section-eyebrow { font-size: 0.65rem !important; }
+}
+
+/* Mobile GPU / Backdrop Filter Refinements */
+@media (max-width: 767px) {
+  .glass-panel {
+    backdrop-filter: blur(10px) saturate(125%);
+    -webkit-backdrop-filter: blur(10px) saturate(125%);
+    box-shadow: 0 12px 30px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  .glass-panel-light {
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+  .modal-overlay {
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+  .gold-frame-mock, .wood-frame-mock { box-shadow: 0 16px 34px rgba(0,0,0,.65); }
+  .led-frame-mock { box-shadow: 0 0 24px rgba(227,190,81,.55), 0 0 45px rgba(227,190,81,.22), inset 0 0 12px rgba(227,190,81,.35); }
+  .reveal, .reveal-scale {
+    transition-duration: .45s !important;
+    will-change: auto;
+  }
+  .reveal-d1,.reveal-d2,.reveal-d3,.reveal-d4,.reveal-d5,.reveal-d6 { transition-delay: 0s !important; }
+  .btn-luxury, .btn-outline-luxury, .btn-call-luxury {
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .product-card {
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
+  }
+  .product-card:hover, .glass-panel:hover { transform: none; }
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "gal-1",
+    "title": "Showroom Video Tour",
+    "image": "images/products/1.jpeg",
+    "mediaUrl": "shop-video.mp4",
+    "mediaType": "video",
+    "category": "videos"
+  },
+  {
+    "id": "gal-2",
+    "title": "Gold Temple Arch Installation",
+    "image": "images/products/25.jpeg",
+    "mediaUrl": "images/products/25.jpeg",
+    "mediaType": "image",
+    "category": "temple"
+  },
+  {
+    "id": "gal-3",
+    "title": "Royal Mataji Frame",
+    "image": "images/products/27.jpeg",
+    "mediaUrl": "images/products/27.jpeg",
+    "mediaType": "image",
+    "category": "frames"
+  },
+  {
+    "id": "gal-4",
+    "title": "Glowing LED Display Wall",
+    "image": "images/products/28.jpeg",
+    "mediaUrl": "images/products/28.jpeg",
+    "mediaType": "image",
+    "category": "installation"
+  },
+  {
+    "id": "gal-5",
+    "title": "Backlit LED Artwork Showcase",
+    "image": "images/products/13.jpeg",
+    "mediaUrl": "shop-video.mp4",
+    "mediaType": "video",
+    "category": "videos"
+  },
+  {
+    "id": "gal-6",
+    "title": "Luxury Diamond Frame Finish",
+    "image": "images/products/16.jpeg",
+    "mediaUrl": "images/products/16.jpeg",
+    "mediaType": "image",
+    "category": "frames"
+  }
+]
