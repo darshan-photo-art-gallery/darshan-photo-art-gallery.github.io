@@ -248,90 +248,17 @@ body {
   transform: translateX(-50%);
   background: rgba(14, 14, 22, 0.95);
   border: 1.5px solid rgba(227, 190, 81, 0.6);
-  padding: 14px 28px;
-  border-radius: var(--border-radius-full);
   color: var(--color-gold-200);
-  z-index: 999;
-  font-size: 14px;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-full);
+  font-size: 0.85rem;
   font-weight: 500;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
-  pointer-events: none;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-10px);
+  z-index: 99999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  animation: toastPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Admin Input Fields & Modals */
-.admin-input {
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.75rem 1rem;
-  color: #fff;
-  outline: none;
-  transition: border-color 0.3s;
-}
-.admin-input:focus {
-  border-color: rgba(227, 190, 81, 0.7);
-  box-shadow: 0 0 0 3px rgba(227, 190, 81, 0.15);
-}
-.admin-input option {
-  background: #090910;
-  color: #fff;
-}
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(3, 3, 7, 0.85);
-  backdrop-filter: blur(12px);
-  padding: 1rem;
-}
-
-/* Floating Action Buttons (FAB) */
-.fab-group {
-  position: fixed;
-  bottom: calc(1.5rem + env(safe-area-inset-bottom));
-  right: 1.25rem;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
-}
-.fab-whatsapp {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #25D366;
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(37,211,102,0.55), 0 3px 10px rgba(0,0,0,0.3);
-  font-size: 1.65rem;
-  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease;
-  text-decoration: none;
-}
-.fab-whatsapp:hover, .fab-whatsapp:active {
-  transform: scale(1.13) translateY(-2px);
-  box-shadow: 0 14px 35px rgba(37,211,102,0.7), 0 6px 14px rgba(0,0,0,0.4);
-}
-
-#backToTop {
-  bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
-}
-
-/* Focus States */
-a:focus-visible, button:focus-visible {
-  outline: 2px solid rgba(227, 190, 81, 0.8);
-  outline-offset: 3px;
-  border-radius: 4px;
+@keyframes toastPop {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
