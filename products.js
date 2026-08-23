@@ -110,35 +110,44 @@ function saveStore(key) {
   localWriteAt[key] = Date.now();
   const payload = JSON.stringify(STORE[key]);
 
-  // Save to Firebase Cloud Database if available
-  try {
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.database && (window.FIREBASE_CONFIG || firebase.database())) {
-      firebase.database().ref('dpag_store/' + key).set(STORE[key])
-        .then(() => {
-          isFirebaseConnected = true;
-          updateFirebaseBadgeUI(true);
-        })
-        .catch(err => {
-          console.error('Cloud sync error:', err);
-          showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err));
-        });
-    }
-  } catch (err) {
-    console.error('Cloud sync error:', err);
-  }
-
-  // Save to LocalStorage cache
+  // Save to LocalStorage cache first
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('dpag_' + key, payload);
     }
   } catch (err) {
     console.warn('LocalStorage quota exceeded:', err);
-    showToast('⚠️ ફોટા મોટા છે - ડેટા ક્લાઉડમાં સેવ થયો.');
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('dpag_recent');
+        localStorage.setItem('dpag_' + key, payload);
+      }
+    } catch (e2) {}
+  }
+
+  // Save to Firebase Cloud Database if available
+  try {
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+      const db = firebase.database();
+      db.ref('dpag_store/' + key).set(STORE[key])
+        .then(() => {
+          isFirebaseConnected = true;
+          updateFirebaseBadgeUI(true);
+        })
+        .catch(err => {
+          console.error('Cloud sync error:', err);
+          if (typeof showToast === 'function') {
+            showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err));
+          }
+        });
+    }
+  } catch (err) {
+    console.error('Cloud sync exception:', err);
   }
 }
 
 function updateFirebaseBadgeUI(connected) {
+  isFirebaseConnected = !!connected;
   const badge = document.getElementById('firebaseStatusBadge');
   if (badge) {
     if (connected) {
@@ -166,11 +175,11 @@ function initFirebaseSync() {
 
       // Listen for Firebase Connection state
       db.ref('.info/connected').on('value', snap => {
-        if (snap.val() === true) {
-          isFirebaseConnected = true;
-          updateFirebaseBadgeUI(true);
-        } else {
-          updateFirebaseBadgeUI(false);
+        const connected = snap.val() === true;
+        isFirebaseConnected = connected;
+        updateFirebaseBadgeUI(connected);
+        if (connected && typeof getRoute === 'function' && getRoute().startsWith('admin')) {
+          if (typeof render === 'function') render();
         }
       });
 
@@ -179,19 +188,27 @@ function initFirebaseSync() {
       keys.forEach(k => {
         db.ref('dpag_store/' + k).on('value', snapshot => {
           const val = snapshot.val();
+          isFirebaseConnected = true;
+          updateFirebaseBadgeUI(true);
+
           if (val && Array.isArray(val) && val.length > 0) {
-            if (Date.now() - (localWriteAt[k] || 0) < 8000) { isFirebaseConnected = true; updateFirebaseBadgeUI(true); return; }
+            // Ignore snapshot if local user edited/added/deleted data in last 15s
+            if (Date.now() - (localWriteAt[k] || 0) < 15000) {
+              return;
+            }
             const incoming = JSON.stringify(val);
-            if (incoming === JSON.stringify(STORE[k])) { isFirebaseConnected = true; updateFirebaseBadgeUI(true); return; }
+            const current = JSON.stringify(STORE[k]);
+            if (incoming === current) {
+              return;
+            }
             STORE[k] = val;
-            try { if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_' + k, incoming); } catch (e) {}
-            isFirebaseConnected = true;
-            updateFirebaseBadgeUI(true);
+            try {
+              if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_' + k, incoming);
+            } catch (e) {}
             if (typeof render === 'function') render();
-          } else if (STORE[k] && STORE[k].length) {
-            db.ref('dpag_store/' + k).set(STORE[k]);
-            isFirebaseConnected = true;
-            updateFirebaseBadgeUI(true);
+          } else if (STORE[k] && Array.isArray(STORE[k]) && STORE[k].length > 0) {
+            // If cloud is empty for key, upload local store data to cloud
+            db.ref('dpag_store/' + k).set(STORE[k]).catch(err => console.error('Cloud upload error:', err));
           }
         });
       });
@@ -262,6 +279,7 @@ if (typeof window !== 'undefined') {
   window.STORE = STORE;
   window.saveStore = saveStore;
   window.initFirebaseSync = initFirebaseSync;
+  window.updateFirebaseBadgeUI = updateFirebaseBadgeUI;
   window.toggleWishlist = toggleWishlist;
   window.isWishlisted = isWishlisted;
   window.toggleCompare = toggleCompare;
