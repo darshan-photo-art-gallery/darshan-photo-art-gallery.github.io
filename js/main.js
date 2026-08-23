@@ -117,9 +117,9 @@ function renderHome() {
 }
 
 function renderCatalog(categorySlug) {
-  const products = categorySlug ? (STORE.products || []).filter(p => p.category === categorySlug) : (STORE.products || []);
-  const currentCat = (STORE.categories || []).find(c => c.slug === categorySlug);
-  const totalCount = (STORE.products || []).length;
+  const allProducts = STORE.products || [];
+  const currentCat = categorySlug ? (STORE.categories || []).find(c => c.slug === categorySlug) : null;
+  const totalCount = allProducts.length;
 
   return `
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
@@ -144,7 +144,7 @@ function renderCatalog(categorySlug) {
               <select onchange="window.location.hash = this.value ? '#/catalog/' + this.value : '#/catalog'" class="w-full appearance-none rounded-2xl border border-gold-400/40 bg-noir-950/90 px-4 py-2.5 pr-10 text-xs font-bold uppercase tracking-wider text-gold-200 outline-none transition-all duration-300 hover:border-gold-300 hover:bg-noir-900 focus:border-gold-300 focus:ring-1 focus:ring-gold-400/50 cursor-pointer shadow-lg">
                 <option value="" ${!categorySlug ? 'selected' : ''}>✨ All Categories (${totalCount})</option>
                 ${(STORE.categories || []).map(c => {
-                  const cCount = (STORE.products || []).filter(p => p.category === c.slug).length;
+                  const cCount = allProducts.filter(p => p.category === c.slug).length;
                   return `<option value="${escapeHTML(c.slug)}" ${categorySlug === c.slug ? 'selected' : ''}>
                     ${escapeHTML(c.name)} (${cCount})
                   </option>`;
@@ -157,31 +157,50 @@ function renderCatalog(categorySlug) {
 
             <div class="inline-flex items-center gap-1.5 rounded-2xl bg-gold-400/10 border border-gold-400/35 px-4 py-2.5 text-xs font-extrabold text-gold-300 shadow-md whitespace-nowrap">
               <i class="fa-solid fa-box-archive text-[11px]"></i>
-              <span>${products.length} ${products.length === 1 ? 'Item' : 'Items'}</span>
+              <span>${categorySlug ? allProducts.filter(p => p.category === categorySlug).length : totalCount} Items</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-        ${products.length > 0 ? products.map((p, i) => renderProductCard(p, i)).join('') : `
-          <div class="col-span-full py-16 text-center text-ivory-100/60 glass-panel rounded-3xl">
-            <i class="fa-solid fa-box-open text-4xl text-gold-300/40 mb-3 block"></i>
-            <p class="text-base font-semibold text-ivory-100">No products available in this category.</p>
-            <a href="#/catalog" class="btn-luxury mt-4 text-xs">View All Products</a>
-          </div>
-        `}
-      </div>
+      ${categorySlug ? `
+        <!-- SINGLE CATEGORY VIEW -->
+        <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+          ${allProducts.filter(p => p.category === categorySlug).length > 0 
+            ? allProducts.filter(p => p.category === categorySlug).map((p, i) => renderProductCard(p, i)).join('') 
+            : `<div class="col-span-full py-16 text-center text-ivory-100/60 glass-panel rounded-3xl"><i class="fa-solid fa-box-open text-4xl text-gold-300/40 mb-3 block"></i><p class="text-base font-semibold text-ivory-100">No products available in this category.</p><a href="#/catalog" class="btn-luxury mt-4 text-xs">View All Products</a></div>`}
+        </div>
+      ` : `
+        <!-- ALL CATEGORIES PARTITIONED VIEW -->
+        <div class="mt-12 space-y-16">
+          ${(STORE.categories || []).map(cat => {
+            const catProds = allProducts.filter(p => p.category === cat.slug);
+            if (!catProds.length) return '';
+            return `
+              <section class="relative border-t border-gold-400/20 pt-8">
+                <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+                  <div>
+                    <div class="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.25em] text-gold-300 font-semibold">
+                      <span class="inline-block h-1.5 w-1.5 rounded-full bg-gold-400"></span>
+                      <span>${catProds.length} ${catProds.length === 1 ? 'Product' : 'Products'}</span>
+                    </div>
+                    <h2 class="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-ivory-50 tracking-tight">
+                      ${escapeHTML(currentLang === 'gu' ? cat.nameGu || cat.name : cat.name)}
+                    </h2>
+                  </div>
+                  <a href="#/catalog/${cat.slug}" class="inline-flex items-center gap-1.5 rounded-full bg-gold-400/10 px-4 py-1.5 text-xs font-bold text-gold-300 border border-gold-400/30 hover:bg-gold-400 hover:text-noir-950 transition">
+                    View Collection <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                  </a>
+                </div>
 
-      ${(() => {
-        if (!categorySlug) return '';
-        const suggestions = getRelatedProducts({
-          categorySlug,
-          excludeSlugs: products.map(p => p.slug),
-          limit: 8
-        });
-        return renderSuggestedSection(suggestions, 'Related Collections', 'Suggested for you');
-      })()}
+                <div class="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+                  ${catProds.map((p, i) => renderProductCard(p, i)).join('')}
+                </div>
+              </section>
+            `;
+          }).join('')}
+        </div>
+      `}
     </div>
   `;
 }
@@ -193,6 +212,7 @@ function renderProduct(slug) {
 
   const images = (p.images && p.images.length) ? p.images : ['images/products/1.jpeg'];
   currentProductImgIndex = 0;
+  const hasPrice = p.price && Number(p.price) > 0;
 
   return `
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-10">
@@ -200,7 +220,7 @@ function renderProduct(slug) {
         <div class="flex flex-col gap-4">
           <div class="relative group aspect-square sm:aspect-[4/5] w-full overflow-hidden rounded-3xl glass-panel p-2 flex items-center justify-center bg-noir-900 border border-gold-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
             <img id="prodMainImg" src="${escapeHTML(images[0])}" alt="${escapeHTML(p.name)}" width="600" height="600" fetchpriority="high" class="h-full w-full object-contain rounded-2xl cursor-pointer transition-transform duration-500 group-hover:scale-[1.03]" onerror="this.onerror=null;this.style.opacity='0.35'" onclick="openMediaLightbox(this.src, 'image', '${escapeHTML(p.name)}', ${JSON.stringify(images).replace(/"/g, '&quot;')}, currentProductImgIndex)" />
-            ${discount(p.price, p.offerPrice) > 0 ? `<span class="absolute left-4 top-4 rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950 shadow-lg">-${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
+            ${hasPrice && discount(p.price, p.offerPrice) > 0 ? `<span class="absolute left-4 top-4 rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950 shadow-lg">-${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
           </div>
 
           <div class="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
@@ -218,8 +238,18 @@ function renderProduct(slug) {
           <h1 class="mt-3 font-display text-3xl font-bold text-ivory-50 sm:text-4xl md:text-5xl">${escapeHTML(p.name)}</h1>
           
           <div class="mt-6 flex items-center gap-4">
-            <span class="font-display text-3xl font-bold text-gradient-gold">${formatPrice(p.offerPrice || p.price)}</span>
-            ${p.offerPrice ? `<span class="text-lg text-ivory-100/40 line-through">${formatPrice(p.price)}</span><span class="rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950">${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
+            ${hasPrice ? `
+              <span class="font-display text-3xl font-bold text-gradient-gold">${formatPrice(p.offerPrice || p.price)}</span>
+              ${p.offerPrice ? `<span class="text-lg text-ivory-100/40 line-through">${formatPrice(p.price)}</span><span class="rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950">${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
+            ` : `
+              <div class="inline-flex items-center gap-2.5 rounded-2xl bg-gold-400/10 border border-gold-400/35 px-5 py-3 text-sm font-semibold text-gold-300 shadow-lg">
+                <i class="fa-brands fa-whatsapp text-emerald-400 text-xl"></i>
+                <div>
+                  <p class="font-bold text-gold-200">Price on Request</p>
+                  <p class="text-[0.7rem] text-ivory-100/60 font-gujarati">કિંમત માટે વોટ્સએપ પર સંપર્ક કરો</p>
+                </div>
+              </div>
+            `}
           </div>
 
           <p class="mt-6 text-sm leading-relaxed text-ivory-100/75 whitespace-pre-line">${escapeHTML(p.description || p.shortDesc || '')}</p>
@@ -412,6 +442,13 @@ function renderCompare() {
 
 // ---------------- ADMIN DASHBOARD & FULL CRUD ----------------
 
+let adminSelectedCategoryFilter = 'all';
+
+function setAdminCategoryFilter(catSlug) {
+  adminSelectedCategoryFilter = catSlug;
+  render();
+}
+
 function setAdminTab(tab) {
   STORE.adminTab = tab;
   render();
@@ -499,56 +536,146 @@ function renderAdmin() {
   `;
 }
 
+function renderAdminProductRow(p) {
+  return `
+    <tr class="hover:bg-white/5 transition">
+      <td class="p-3">
+        <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover border border-gold-400/30" />
+      </td>
+      <td class="p-3 font-semibold text-ivory-100">${escapeHTML(p.name)}</td>
+      <td class="p-3 text-xs font-medium text-gold-300 whitespace-nowrap">
+        ${escapeHTML(getCategoryLabel(p.category))}
+      </td>
+      <td class="p-3 text-xs">
+        ${p.price && Number(p.price) > 0 ? `<span class="line-through text-ivory-100/60">${formatPrice(p.price)}</span>` : '<span class="text-ivory-100/40 font-italic">Custom</span>'}
+      </td>
+      <td class="p-3 font-bold text-gold-300 text-xs">
+        ${p.price && Number(p.price) > 0 ? formatPrice(p.offerPrice || p.price) : '<span class="text-emerald-400 flex items-center gap-1"><i class="fa-brands fa-whatsapp text-[11px]"></i> Request</span>'}
+      </td>
+      <td class="p-3"><span class="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400 font-semibold">${p.stock || 50}</span></td>
+      <td class="p-3 text-right space-x-2">
+        <button onclick="openProductModal('${escapeHTML(p.slug)}')" class="rounded-lg bg-gold-400/15 p-2 text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition" title="Edit">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button onclick="deleteProduct('${escapeHTML(p.slug)}')" class="rounded-lg bg-rose-500/15 p-2 text-rose-400 hover:bg-rose-500 hover:text-white transition" title="Delete">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </td>
+    </tr>
+  `;
+}
+
 function renderAdminProducts() {
+  const allProds = STORE.products || [];
+  const categories = STORE.categories || [];
+
+  // Group products by category
+  const knownCatSlugs = new Set(categories.map(c => c.slug));
+  const uncategorizedProds = allProds.filter(p => !knownCatSlugs.has(p.category));
+
   return `
     <div>
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h2 class="font-display text-2xl font-bold text-gold-200">Manage Products</h2>
+        <div>
+          <h2 class="font-display text-2xl font-bold text-gold-200">Manage Products</h2>
+          <p class="text-xs text-ivory-100/60 mt-0.5">Filter by category or manage products in separate category sections.</p>
+        </div>
         <button onclick="openProductModal()" class="btn-luxury !py-2.5 !px-5 text-xs">
           <i class="fa-solid fa-plus"></i> Add New Product
         </button>
       </div>
 
-      <div class="overflow-x-auto rounded-2xl glass-panel p-2">
-        <table class="w-full text-left text-sm">
-          <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold">
-            <tr>
-              <th class="p-3">Image</th>
-              <th class="p-3">Product Name</th>
-              <th class="p-3">Category</th>
-              <th class="p-3">Price</th>
-              <th class="p-3">Offer Price</th>
-              <th class="p-3">Stock</th>
-              <th class="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            ${(STORE.products || []).map(p => `
-              <tr class="hover:bg-white/5 transition">
-                <td class="p-3">
-                  <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover border border-gold-400/30" />
-                </td>
-                <td class="p-3 font-semibold text-ivory-100">${escapeHTML(p.name)}</td>
-                <td class="p-3 text-xs">
-                  <span class="rounded-full bg-gold-400/15 px-3 py-1 text-gold-300 font-semibold border border-gold-400/30 whitespace-nowrap">
-                    ${escapeHTML(getCategoryLabel(p.category))}
-                  </span>
-                </td>
-                <td class="p-3 text-ivory-100/60 line-through">${formatPrice(p.price)}</td>
-                <td class="p-3 font-bold text-gold-300">${formatPrice(p.offerPrice || p.price)}</td>
-                <td class="p-3"><span class="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400 font-semibold">${p.stock || 50}</span></td>
-                <td class="p-3 text-right space-x-2">
-                  <button onclick="openProductModal('${escapeHTML(p.slug)}')" class="rounded-lg bg-gold-400/15 p-2 text-gold-300 hover:bg-gold-400 hover:text-noir-950 transition" title="Edit">
-                    <i class="fa-solid fa-pen-to-square"></i>
+      <!-- CATEGORY FILTER PILLS -->
+      <div class="flex flex-wrap items-center gap-2 mb-8 glass-panel p-3 rounded-2xl border border-white/10">
+        <span class="text-xs font-bold uppercase tracking-wider text-gold-300 mr-2"><i class="fa-solid fa-filter text-[11px]"></i> Filter:</span>
+        <button onclick="setAdminCategoryFilter('all')" class="rounded-full px-4 py-1.5 text-xs font-bold transition ${adminSelectedCategoryFilter === 'all' ? 'bg-gold-400 text-noir-950 shadow-md' : 'bg-white/5 text-ivory-100/70 hover:bg-white/10'}">
+          All Categories (${allProds.length})
+        </button>
+        ${categories.map(c => {
+          const cCount = allProds.filter(p => p.category === c.slug).length;
+          return `
+            <button onclick="setAdminCategoryFilter('${escapeHTML(c.slug)}')" class="rounded-full px-4 py-1.5 text-xs font-bold transition ${adminSelectedCategoryFilter === c.slug ? 'bg-gold-400 text-noir-950 shadow-md' : 'bg-white/5 text-ivory-100/70 hover:bg-white/10'}">
+              ${escapeHTML(c.name)} (${cCount})
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- SEPARATE CATEGORY PRODUCT SECTIONS -->
+      <div class="space-y-8">
+        ${(adminSelectedCategoryFilter === 'all' ? categories : categories.filter(c => c.slug === adminSelectedCategoryFilter)).map(c => {
+          const catProds = allProds.filter(p => p.category === c.slug);
+          return `
+            <div class="glass-panel rounded-3xl p-5 border border-gold-400/20 shadow-lg">
+              <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10 mb-4">
+                <div class="flex items-center gap-3">
+                  <img src="${escapeHTML(c.cover)}" class="h-10 w-10 rounded-xl object-cover border border-gold-400/30" />
+                  <div>
+                    <h3 class="font-display text-xl font-bold text-ivory-50">${escapeHTML(c.name)} <span class="text-xs text-gold-300 font-semibold">${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</span></h3>
+                    <p class="text-xs text-ivory-100/60">${catProds.length} ${catProds.length === 1 ? 'Product' : 'Products'} in this category</p>
+                  </div>
+                </div>
+                <button onclick="openProductModal(null, '${escapeHTML(c.slug)}')" class="btn-luxury !py-2 !px-4 text-xs">
+                  <i class="fa-solid fa-plus"></i> Add Product to ${escapeHTML(c.name)}
+                </button>
+              </div>
+
+              ${catProds.length > 0 ? `
+                <div class="overflow-x-auto rounded-xl">
+                  <table class="w-full text-left text-sm">
+                    <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
+                      <tr>
+                        <th class="p-3">Image</th>
+                        <th class="p-3">Product Name</th>
+                        <th class="p-3">Category</th>
+                        <th class="p-3">Price</th>
+                        <th class="p-3">Offer Price</th>
+                        <th class="p-3">Stock</th>
+                        <th class="p-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      ${catProds.map(p => renderAdminProductRow(p)).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              ` : `
+                <div class="py-8 text-center text-xs text-ivory-100/50">
+                  <p>No products added in <strong>${escapeHTML(c.name)}</strong> yet.</p>
+                  <button onclick="openProductModal(null, '${escapeHTML(c.slug)}')" class="btn-outline-luxury !py-1.5 !px-3 text-xs mt-3">
+                    <i class="fa-solid fa-plus"></i> Add First Product Here
                   </button>
-                  <button onclick="deleteProduct('${escapeHTML(p.slug)}')" class="rounded-lg bg-rose-500/15 p-2 text-rose-400 hover:bg-rose-500 hover:text-white transition" title="Delete">
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+                </div>
+              `}
+            </div>
+          `;
+        }).join('')}
+
+        ${(adminSelectedCategoryFilter === 'all' && uncategorizedProds.length > 0) ? `
+          <div class="glass-panel rounded-3xl p-5 border border-amber-500/30 shadow-lg">
+            <div class="pb-4 border-b border-white/10 mb-4">
+              <h3 class="font-display text-xl font-bold text-amber-300">Other / Custom Categories (${uncategorizedProds.length})</h3>
+            </div>
+            <div class="overflow-x-auto rounded-xl">
+              <table class="w-full text-left text-sm">
+                <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
+                  <tr>
+                    <th class="p-3">Image</th>
+                    <th class="p-3">Product Name</th>
+                    <th class="p-3">Category</th>
+                    <th class="p-3">Price</th>
+                    <th class="p-3">Offer Price</th>
+                    <th class="p-3">Stock</th>
+                    <th class="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  ${uncategorizedProds.map(p => renderAdminProductRow(p)).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
@@ -560,8 +687,9 @@ let PHOTO_TARGET_SLUG = null;
 let PHOTO_REPLACE_INDEX = null;
 const MAX_PHOTOS = 8;
 
-function openProductModal(editSlug = null) {
+function openProductModal(editSlug = null, defaultCategory = null) {
   const p = editSlug ? STORE.products.find(x => x.slug === editSlug) : null;
+  const activeCatSlug = p ? p.category : (defaultCategory || '');
   PHOTO_TARGET_SLUG = editSlug || null;
   PHOTO_QUEUE = (p && Array.isArray(p.images) ? p.images : []).map((src, i) => ({
     file: null, name: 'Photo ' + (i + 1), status: 'done', data: src, error: null, existing: true
@@ -587,7 +715,7 @@ function openProductModal(editSlug = null) {
               <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category</label>
               <select id="pCat" class="admin-input">
                 ${STORE.categories.map(c => {
-                  const isSelected = p && (p.category === c.slug || p.category === c.name || (p.category && c.slug && p.category.toLowerCase() === c.slug.toLowerCase()));
+                  const isSelected = (activeCatSlug && (activeCatSlug === c.slug || activeCatSlug === c.name || activeCatSlug.toLowerCase() === c.slug.toLowerCase()));
                   return `<option value="${escapeHTML(c.slug)}" ${isSelected ? 'selected' : ''}>${escapeHTML(c.name)} ${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</option>`;
                 }).join('')}
               </select>
@@ -600,12 +728,12 @@ function openProductModal(editSlug = null) {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Regular Price (₹)</label>
-              <input id="pPrice" type="number" required value="${p ? p.price : ''}" class="admin-input" placeholder="3499" />
+              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Regular Price (₹) <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Leave 0 for Price on Request)</span></label>
+              <input id="pPrice" type="number" value="${p && p.price ? p.price : ''}" class="admin-input" placeholder="0 or 3499" />
             </div>
             <div>
               <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Price (₹)</label>
-              <input id="pOfferPrice" type="number" value="${p ? p.offerPrice || '' : ''}" class="admin-input" placeholder="2499" />
+              <input id="pOfferPrice" type="number" value="${p && p.offerPrice ? p.offerPrice : ''}" class="admin-input" placeholder="2499" />
             </div>
           </div>
 
@@ -771,14 +899,15 @@ async function saveProductForm(e, existingSlug) {
     const name = document.getElementById('pName').value.trim();
     const cat = document.getElementById('pCat').value;
     const stock = parseInt(document.getElementById('pStock').value) || 50;
-    const price = parseFloat(document.getElementById('pPrice').value);
-    const offerPrice = parseFloat(document.getElementById('pOfferPrice').value) || null;
+    const priceVal = document.getElementById('pPrice').value.trim();
+    const price = priceVal !== '' ? parseFloat(priceVal) : 0;
+    const offerVal = document.getElementById('pOfferPrice').value.trim();
+    const offerPrice = offerVal !== '' ? parseFloat(offerVal) : null;
     const material = document.getElementById('pMaterial').value.trim();
     const desc = document.getElementById('pDesc').value.trim();
     const featured = document.getElementById('pFeatured').checked;
 
     if (!name) { showToast('❌ Product name is required.'); return; }
-    if (!isFinite(price)) { showToast('❌ Enter valid price.'); return; }
 
     if (PHOTO_QUEUE.length) {
       if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing photos...';
@@ -796,7 +925,7 @@ async function saveProductForm(e, existingSlug) {
     const productData = {
       slug, name, category: cat, shortDesc: desc, description: desc, material,
       sizes: ["8x10 in","12x16 in","16x20 in"], colors: ["Gold"], images: imageSrcs,
-      price, offerPrice, stock, rating: 5.0, reviews: 1, featured
+      price: isNaN(price) ? 0 : price, offerPrice: isNaN(offerPrice) ? null : offerPrice, stock, rating: 5.0, reviews: 1, featured
     };
 
     if (existingSlug) {
@@ -1597,6 +1726,7 @@ if (typeof window !== 'undefined') {
   window.navigate = navigate;
   window.render = render;
   window.getCategoryLabel = getCategoryLabel;
+  window.setAdminCategoryFilter = setAdminCategoryFilter;
   window.setAdminTab = setAdminTab;
   window.renderAdmin = renderAdmin;
   window.renderAdminProducts = renderAdminProducts;

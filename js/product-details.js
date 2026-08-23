@@ -63,7 +63,8 @@ function renderSuggestedSection(list, heading, sub) {
 }
 
 function renderProductCard(p, i = 0) {
-  const d = discount(p.price, p.offerPrice);
+  const hasPrice = p.price && Number(p.price) > 0;
+  const d = hasPrice ? discount(p.price, p.offerPrice) : 0;
   const imgUrl = (p.images && p.images[0]) ? p.images[0] : 'images/products/1.jpeg';
   return `
     <div class="product-card group relative overflow-hidden rounded-3xl glass-panel transition-all duration-500 hover:-translate-y-2 reveal reveal-d${(i%4)+1}">
@@ -85,9 +86,15 @@ function renderProductCard(p, i = 0) {
         <a href="#/product/${escapeHTML(p.slug)}">
           <h3 class="line-clamp-2 font-display text-base font-bold text-ivory-50 transition group-hover:text-gold-300 sm:text-lg">${escapeHTML(p.name)}</h3>
         </a>
-        <div class="mt-3 flex items-baseline gap-2">
-          <span class="font-display text-lg font-bold text-gold-200 sm:text-xl">${formatPrice(p.offerPrice || p.price)}</span>
-          ${p.offerPrice ? `<span class="text-xs text-ivory-100/40 line-through">${formatPrice(p.price)}</span>` : ''}
+        <div class="mt-3 flex items-center gap-2">
+          ${hasPrice ? `
+            <span class="font-display text-lg font-bold text-gold-200 sm:text-xl">${formatPrice(p.offerPrice || p.price)}</span>
+            ${p.offerPrice ? `<span class="text-xs text-ivory-100/40 line-through">${formatPrice(p.price)}</span>` : ''}
+          ` : `
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-gold-400/10 px-2.5 py-1 text-xs font-semibold text-gold-300 border border-gold-400/25">
+              <i class="fa-brands fa-whatsapp text-emerald-400"></i> Price on Request
+            </span>
+          `}
         </div>
       </div>
     </div>

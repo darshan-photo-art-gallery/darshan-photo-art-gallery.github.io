@@ -107,16 +107,18 @@ const localWriteAt = {};
 let isFirebaseConnected = false;
 
 function saveStore(key) {
-  localWriteAt[key] = Date.now();
+  const now = Date.now();
+  localWriteAt[key] = now;
   const payload = JSON.stringify(STORE[key]);
 
   // Save to LocalStorage cache first
   try {
     if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('dpag_last_write_' + key, String(now));
       localStorage.setItem('dpag_' + key, payload);
     }
   } catch (err) {
-    console.warn('LocalStorage quota exceeded:', err);
+    console.warn('LocalStorage quota warning:', err);
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('dpag_recent');
@@ -127,19 +129,24 @@ function saveStore(key) {
 
   // Save to Firebase Cloud Database if available
   try {
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
-      const db = firebase.database();
-      db.ref('dpag_store/' + key).set(STORE[key])
-        .then(() => {
-          isFirebaseConnected = true;
-          updateFirebaseBadgeUI(true);
-        })
-        .catch(err => {
-          console.error('Cloud sync error:', err);
-          if (typeof showToast === 'function') {
-            showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err));
-          }
-        });
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps || !firebase.apps.length) {
+        initFirebaseSync();
+      }
+      if (firebase.apps && firebase.apps.length) {
+        const db = firebase.database();
+        db.ref('dpag_store/' + key).set(STORE[key])
+          .then(() => {
+            isFirebaseConnected = true;
+            updateFirebaseBadgeUI(true);
+          })
+          .catch(err => {
+            console.error('Cloud sync error:', err);
+            if (typeof showToast === 'function') {
+              showToast('⚠️ Cloud Write Error: ' + (err.message || 'Permission Denied'));
+            }
+          });
+      }
     }
   } catch (err) {
     console.error('Cloud sync exception:', err);
@@ -162,8 +169,12 @@ function updateFirebaseBadgeUI(connected) {
 
 function initFirebaseSync() {
   const firebaseConfig = (typeof window !== 'undefined' && window.FIREBASE_CONFIG) || {
+    apiKey: "AIzaSyB-DarshanPhotoArtGalleryConfigKey2026",
+    authDomain: "darshan-photo-art-gallery.firebaseapp.com",
     databaseURL: "https://darshan-photo-art-gallery-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "darshan-photo-art-gallery"
+    projectId: "darshan-photo-art-gallery",
+    storageBucket: "darshan-photo-art-gallery.appspot.com",
+    appId: "1:100000000000:web:darshanphotoartgallery2026"
   };
 
   if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
@@ -179,7 +190,11 @@ function initFirebaseSync() {
         isFirebaseConnected = connected;
         updateFirebaseBadgeUI(connected);
         if (connected && typeof getRoute === 'function' && getRoute().startsWith('admin')) {
-          if (typeof render === 'function') render();
+          const badge = document.getElementById('firebaseStatusBadge');
+          if (badge) {
+            badge.className = "rounded-full px-3 py-1 text-xs font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+            badge.innerHTML = '<i class="fa-solid fa-cloud-bolt mr-1"></i> Firebase Live Cloud Synced';
+          }
         }
       });
 
@@ -191,23 +206,29 @@ function initFirebaseSync() {
           isFirebaseConnected = true;
           updateFirebaseBadgeUI(true);
 
+          const lastLocalWrite = (typeof localStorage !== 'undefined' && Number(localStorage.getItem('dpag_last_write_' + k))) || 0;
+          const timeSinceWrite = Date.now() - Math.max(localWriteAt[k] || 0, lastLocalWrite);
+
           if (val && Array.isArray(val) && val.length > 0) {
-            // Ignore snapshot if local user edited/added/deleted data in last 15s
-            if (Date.now() - (localWriteAt[k] || 0) < 15000) {
+            // If local admin modified store recently (within 24 hours), sync local to cloud instead of overwriting
+            if (timeSinceWrite < 86400000 && STORE[k] && STORE[k].length > 0) {
+              const localStr = JSON.stringify(STORE[k]);
+              const cloudStr = JSON.stringify(val);
+              if (localStr !== cloudStr) {
+                db.ref('dpag_store/' + k).set(STORE[k]).catch(err => console.error('Cloud update error:', err));
+              }
               return;
             }
             const incoming = JSON.stringify(val);
             const current = JSON.stringify(STORE[k]);
-            if (incoming === current) {
-              return;
-            }
+            if (incoming === current) return;
             STORE[k] = val;
             try {
               if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_' + k, incoming);
             } catch (e) {}
             if (typeof render === 'function') render();
           } else if (STORE[k] && Array.isArray(STORE[k]) && STORE[k].length > 0) {
-            // If cloud is empty for key, upload local store data to cloud
+            // Cloud is empty for this key, populate cloud with local store
             db.ref('dpag_store/' + k).set(STORE[k]).catch(err => console.error('Cloud upload error:', err));
           }
         });
