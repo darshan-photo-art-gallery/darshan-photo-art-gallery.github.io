@@ -51,19 +51,30 @@ const I18N = {
     heroHeadline: `તમારી કલ્પના, <span class="text-gradient-gold">અમારી કળા.</span>`
   },
 };
-let currentLang = localStorage.getItem('dpag_lang') || 'en';
+
+function safeGetStorage(key, fallback) {
+  if (typeof localStorage === 'undefined') return fallback;
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('dpag_lang')) || 'en';
 
 // Central State Store
 const STORE = {
-  wishlist: JSON.parse(localStorage.getItem('dpag_wishlist') || '[]'),
-  compare: JSON.parse(localStorage.getItem('dpag_compare') || '[]'),
-  recentlyViewed: JSON.parse(localStorage.getItem('dpag_recent') || '[]'),
-  adminUser: JSON.parse(localStorage.getItem('dpag_admin') || 'null'),
-  products: JSON.parse(localStorage.getItem('dpag_products') || '[]'),
-  categories: JSON.parse(localStorage.getItem('dpag_categories') || '[]'),
-  offers: JSON.parse(localStorage.getItem('dpag_offers') || '[]'),
-  gallery: JSON.parse(localStorage.getItem('dpag_gallery') || '[]'),
-  subscribers: JSON.parse(localStorage.getItem('dpag_subscribers') || '[]'),
+  wishlist: safeGetStorage('dpag_wishlist', []),
+  compare: safeGetStorage('dpag_compare', []),
+  recentlyViewed: safeGetStorage('dpag_recent', []),
+  adminUser: safeGetStorage('dpag_admin', null),
+  products: safeGetStorage('dpag_products', []),
+  categories: safeGetStorage('dpag_categories', []),
+  offers: safeGetStorage('dpag_offers', []),
+  gallery: safeGetStorage('dpag_gallery', []),
+  subscribers: safeGetStorage('dpag_subscribers', []),
   adminTab: 'products',
 };
 
@@ -99,25 +110,58 @@ function saveStore(key) {
   localWriteAt[key] = Date.now();
   const payload = JSON.stringify(STORE[key]);
 
+  // Save to LocalStorage cache first
   try {
-    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.database && window.FIREBASE_CONFIG) {
-      firebase.database().ref('dpag_store/' + key).set(STORE[key])
-        .catch(err => { console.error('Cloud sync error:', err); showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err)); });
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('dpag_' + key, payload);
     }
   } catch (err) {
-    console.error('Cloud sync error:', err);
+    console.warn('LocalStorage quota exceeded:', err);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('dpag_recent');
+        localStorage.setItem('dpag_' + key, payload);
+      }
+    } catch (e2) {}
   }
 
+  // Save to Firebase Cloud Database if available
   try {
-    localStorage.setItem('dpag_' + key, payload);
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+      const db = firebase.database();
+      db.ref('dpag_store/' + key).set(STORE[key])
+        .then(() => {
+          isFirebaseConnected = true;
+          updateFirebaseBadgeUI(true);
+        })
+        .catch(err => {
+          console.error('Cloud sync error:', err);
+          if (typeof showToast === 'function') {
+            showToast('⚠️ ક્લાઉડ સેવ નિષ્ફળ: ' + (err.message || err));
+          }
+        });
+    }
   } catch (err) {
-    console.warn('LocalStorage quota exceeded:', err);
-    showToast('⚠️ ફોટા મોટા છે - ડેટા ક્લાઉડમાં સેવ થયો.');
+    console.error('Cloud sync exception:', err);
+  }
+}
+
+function updateFirebaseBadgeUI(connected) {
+  isFirebaseConnected = !!connected;
+  const badge = document.getElementById('firebaseStatusBadge');
+  if (badge) {
+    if (connected) {
+      badge.className = "rounded-full px-3 py-1 text-xs font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      badge.innerHTML = '<i class="fa-solid fa-cloud-bolt mr-1"></i> Firebase Live Cloud Synced';
+    } else {
+      badge.className = "rounded-full px-3 py-1 text-xs font-semibold border bg-amber-500/10 text-amber-400 border-amber-500/20";
+      badge.innerHTML = '<i class="fa-solid fa-database mr-1"></i> Local Storage Mode';
+    }
   }
 }
 
 function initFirebaseSync() {
-  const firebaseConfig = window.FIREBASE_CONFIG || {
+  const firebaseConfig = (typeof window !== 'undefined' && window.FIREBASE_CONFIG) || {
     databaseURL: "https://darshan-photo-art-gallery-default-rtdb.asia-southeast1.firebasedatabase.app/",
     projectId: "darshan-photo-art-gallery"
   };
@@ -128,22 +172,43 @@ function initFirebaseSync() {
         firebase.initializeApp(firebaseConfig);
       }
       const db = firebase.database();
+
+      // Listen for Firebase Connection state
+      db.ref('.info/connected').on('value', snap => {
+        const connected = snap.val() === true;
+        isFirebaseConnected = connected;
+        updateFirebaseBadgeUI(connected);
+        if (connected && typeof getRoute === 'function' && getRoute().startsWith('admin')) {
+          if (typeof render === 'function') render();
+        }
+      });
+
       const keys = ['products', 'categories', 'offers', 'gallery', 'subscribers'];
 
       keys.forEach(k => {
         db.ref('dpag_store/' + k).on('value', snapshot => {
           const val = snapshot.val();
+          isFirebaseConnected = true;
+          updateFirebaseBadgeUI(true);
+
           if (val && Array.isArray(val) && val.length > 0) {
-            if (Date.now() - (localWriteAt[k] || 0) < 8000) { isFirebaseConnected = true; return; }
+            // Ignore snapshot if local user edited/added/deleted data in last 15s
+            if (Date.now() - (localWriteAt[k] || 0) < 15000) {
+              return;
+            }
             const incoming = JSON.stringify(val);
-            if (incoming === JSON.stringify(STORE[k])) { isFirebaseConnected = true; return; }
+            const current = JSON.stringify(STORE[k]);
+            if (incoming === current) {
+              return;
+            }
             STORE[k] = val;
-            try { localStorage.setItem('dpag_' + k, incoming); } catch (e) {}
-            isFirebaseConnected = true;
+            try {
+              if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_' + k, incoming);
+            } catch (e) {}
             if (typeof render === 'function') render();
-          } else if (STORE[k] && STORE[k].length) {
-            db.ref('dpag_store/' + k).set(STORE[k]);
-            isFirebaseConnected = true;
+          } else if (STORE[k] && Array.isArray(STORE[k]) && STORE[k].length > 0) {
+            // If cloud is empty for key, upload local store data to cloud
+            db.ref('dpag_store/' + k).set(STORE[k]).catch(err => console.error('Cloud upload error:', err));
           }
         });
       });
@@ -205,4 +270,19 @@ function updateBadges() {
     if (STORE.compare.length > 0) { cc.textContent = STORE.compare.length; cc.style.display = 'flex'; }
     else cc.style.display = 'none';
   }
+}
+
+// Bind to global scope if available
+if (typeof window !== 'undefined') {
+  window.SITE = SITE;
+  window.I18N = I18N;
+  window.STORE = STORE;
+  window.saveStore = saveStore;
+  window.initFirebaseSync = initFirebaseSync;
+  window.updateFirebaseBadgeUI = updateFirebaseBadgeUI;
+  window.toggleWishlist = toggleWishlist;
+  window.isWishlisted = isWishlisted;
+  window.toggleCompare = toggleCompare;
+  window.addRecent = addRecent;
+  window.updateBadges = updateBadges;
 }

@@ -99,9 +99,9 @@ function safeMediaUrl(u) {
 }
 
 /**
- * Canvas Image Compressor (HD clarity up to 900px @ 0.72 quality).
+ * Canvas Image Compressor (Optimized 600px @ 0.65 quality for fast cloud & local storage).
  */
-function compressImage(file, maxWidth = 900, maxHeight = 900, quality = 0.72) {
+function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.65) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -122,8 +122,8 @@ function compressImage(file, maxWidth = 900, maxHeight = 900, quality = 0.72) {
         ctx.drawImage(img, 0, 0, w, h);
         let out = canvas.toDataURL('image/jpeg', quality);
         let q = quality;
-        while (out.length > 350000 && q > 0.4) {
-          q -= 0.1;
+        while (out.length > 200000 && q > 0.35) {
+          q -= 0.08;
           out = canvas.toDataURL('image/jpeg', q);
         }
         resolve(out);

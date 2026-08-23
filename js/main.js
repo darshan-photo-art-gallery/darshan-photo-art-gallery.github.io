@@ -3,11 +3,13 @@
    ============================================================ */
 
 function getRoute() {
+  if (typeof window === 'undefined') return 'home';
   const hash = window.location.hash || '#/home';
   return hash.replace('#', '').replace(/^\//, '');
 }
 
 function navigate(path) {
+  if (typeof window === 'undefined') return;
   const target = path.startsWith('/') ? '#' + path : '#/' + path;
   window.location.hash = target;
 }
@@ -399,7 +401,7 @@ function renderCompare() {
   `;
 }
 
-// ---------------- ADMIN DASHBOARD & CRUD ----------------
+// ---------------- ADMIN DASHBOARD & FULL CRUD ----------------
 
 function setAdminTab(tab) {
   STORE.adminTab = tab;
@@ -442,7 +444,7 @@ function renderAdmin() {
           <h1 class="font-display text-3xl font-bold text-ivory-50 sm:text-4xl">Store Management Console</h1>
         </div>
         <div class="flex items-center gap-3">
-          <span class="rounded-full px-3 py-1 text-xs font-semibold border ${isFirebaseConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}">
+          <span id="firebaseStatusBadge" class="rounded-full px-3 py-1 text-xs font-semibold border ${isFirebaseConnected ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}">
             <i class="fa-solid ${isFirebaseConnected ? 'fa-cloud-bolt' : 'fa-database'} mr-1"></i> ${isFirebaseConnected ? 'Firebase Live Cloud Synced' : 'Local Storage Mode'}
           </span>
           <button onclick="adminLogout()" class="btn-outline-luxury !py-2 !px-4 !text-xs">
@@ -539,13 +541,288 @@ function renderAdminProducts() {
   `;
 }
 
+// ---------------- PRODUCT PHOTO & MODAL MANAGER ----------------
+let PHOTO_QUEUE = [];
+let PHOTO_TARGET_SLUG = null;
+let PHOTO_REPLACE_INDEX = null;
+const MAX_PHOTOS = 8;
+
+function openProductModal(editSlug = null) {
+  const p = editSlug ? STORE.products.find(x => x.slug === editSlug) : null;
+  PHOTO_TARGET_SLUG = editSlug || null;
+  PHOTO_QUEUE = (p && Array.isArray(p.images) ? p.images : []).map((src, i) => ({
+    file: null, name: 'Photo ' + (i + 1), status: 'done', data: src, error: null, existing: true
+  }));
+  const mc = document.getElementById('modalContainer');
+  if (!mc) return;
+
+  mc.innerHTML = `
+    <div class="modal-overlay">
+      <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto animate-page-entry">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">${p ? 'Edit Product' : 'Add New Product'}</h3>
+          <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <form onsubmit="saveProductForm(event, '${p ? p.slug : ''}')" class="mt-6 space-y-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Name</label>
+            <input id="pName" required value="${p ? escapeHTML(p.name) : ''}" class="admin-input" placeholder="e.g. Royal Gold Mataji Frame" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category</label>
+              <select id="pCat" class="admin-input">
+                ${STORE.categories.map(c => `<option value="${escapeHTML(c.slug)}" ${p && p.category === c.slug ? 'selected' : ''}>${escapeHTML(c.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Stock Quantity</label>
+              <input id="pStock" type="number" value="${p ? p.stock || 50 : 50}" class="admin-input" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Regular Price (₹)</label>
+              <input id="pPrice" type="number" required value="${p ? p.price : ''}" class="admin-input" placeholder="3499" />
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Price (₹)</label>
+              <input id="pOfferPrice" type="number" value="${p ? p.offerPrice || '' : ''}" class="admin-input" placeholder="2499" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Material Details</label>
+            <input id="pMaterial" value="${p ? escapeHTML(p.material || '') : ''}" class="admin-input" placeholder="e.g. 24K Gold Polish Teakwood" />
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <textarea id="pDesc" rows="3" class="admin-input">${p ? escapeHTML(p.description || p.shortDesc || '') : ''}</textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Photos (Max 8)</label>
+
+            <div id="pDropZone"
+                 ondragover="event.preventDefault(); this.classList.add('ring-2','ring-gold-400')"
+                 ondragleave="this.classList.remove('ring-2','ring-gold-400')"
+                 ondrop="handleProductPhotoDrop(event)"
+                 onclick="document.getElementById('pImageFile').click()"
+                 class="mt-1 cursor-pointer rounded-2xl border border-dashed border-gold-400/40 bg-white/5 px-4 py-6 text-center transition hover:bg-white/10">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-gold-300"></i>
+              <p class="mt-2 text-xs font-semibold text-ivory-100/80">Drop photos here or click to select</p>
+            </div>
+            <input id="pImageFile" type="file" accept="image/*" multiple onchange="handleProductPhotoSelect(event)" class="hidden" />
+            <input id="pReplaceFile" type="file" accept="image/*" class="hidden" onchange="handleProductPhotoReplaceFile(event)" />
+
+            <div id="pUploadProgress" class="mt-3 hidden">
+              <div class="flex items-center justify-between text-[0.7rem] font-semibold text-ivory-100/70">
+                <span id="pProgressText">Preparing photos...</span>
+                <span id="pProgressPct">0%</span>
+              </div>
+              <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div id="pProgressBar" class="h-full w-0 rounded-full bg-gold-400 transition-all duration-300"></div>
+              </div>
+              <ul id="pPhotoList" class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto"></ul>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 pt-2">
+            <label class="flex items-center gap-2 text-xs font-semibold text-gold-300 cursor-pointer">
+              <input id="pFeatured" type="checkbox" ${p && p.featured ? 'checked' : ''} class="accent-gold-400 h-4 w-4" />
+              Featured on Home Page
+            </label>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+            <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  renderPhotoQueue();
+}
+
+function queueFiles(fileList) {
+  const room = MAX_PHOTOS - PHOTO_QUEUE.length;
+  if (room <= 0) { showToast('⚠️ Max ' + MAX_PHOTOS + ' photos allowed.'); return; }
+  const files = Array.from(fileList || []).filter(f => f && f.type.startsWith('image/')).slice(0, room);
+  if (!files.length) return;
+  PHOTO_QUEUE = PHOTO_QUEUE.concat(files.map(f => ({ file: f, name: f.name, status: 'pending', data: null, error: null, existing: false })));
+  renderPhotoQueue();
+  processProductPhotos().then(() => syncPhotosToSavedProduct());
+}
+
+function handleProductPhotoSelect(e) { queueFiles(e.target.files); e.target.value = ''; }
+function handleProductPhotoDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById('pDropZone');
+  if (dz) dz.classList.remove('ring-2', 'ring-gold-400');
+  queueFiles(e.dataTransfer && e.dataTransfer.files);
+}
+
+function renderPhotoQueue() {
+  const wrap = document.getElementById('pUploadProgress');
+  if (!wrap) return;
+  if (!PHOTO_QUEUE.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+
+  const done = PHOTO_QUEUE.filter(x => x.status === 'done').length;
+  const failed = PHOTO_QUEUE.filter(x => x.status === 'error').length;
+  const pct = Math.round((done / PHOTO_QUEUE.length) * 100);
+
+  const bar = document.getElementById('pProgressBar'); if (bar) bar.style.width = pct + '%';
+  const pctText = document.getElementById('pProgressPct'); if (pctText) pctText.textContent = pct + '%';
+  const txt = document.getElementById('pProgressText');
+  if (txt) txt.textContent = failed ? `${done}/${PHOTO_QUEUE.length} ready · ${failed} failed` : `${done}/${PHOTO_QUEUE.length} photos ready`;
+
+  const badge = {
+    pending: '<i class="fa-regular fa-clock text-ivory-100/50"></i>',
+    working: '<i class="fa-solid fa-spinner fa-spin text-gold-300"></i>',
+    done: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',
+    error: '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>'
+  };
+
+  const photoList = document.getElementById('pPhotoList');
+  if (photoList) {
+    photoList.innerHTML = PHOTO_QUEUE.map((it, i) => `
+      <li class="relative overflow-hidden rounded-xl border ${it.status === 'error' ? 'border-rose-400/50' : 'border-white/10'} bg-white/5">
+        <div class="aspect-square w-full bg-noir-950/40 flex items-center justify-center">
+          ${it.status === 'done' && it.data ? `<img src="${it.data}" alt="${escapeHTML(it.name)}" class="h-full w-full object-cover" />` : `<span class="text-xl">${badge[it.status]}</span>`}
+        </div>
+        <div class="flex items-center gap-1 px-1.5 py-1 text-[0.62rem] text-ivory-100/70">
+          ${badge[it.status]}<span class="flex-1 truncate">${escapeHTML(it.name)}</span>
+        </div>
+        <div class="flex border-t border-white/10 text-[0.6rem] font-bold">
+          <button type="button" onclick="removeProductPhoto(${i})" class="flex-1 py-1.5 text-rose-400 hover:bg-rose-500 hover:text-white transition">Remove</button>
+        </div>
+      </li>
+    `).join('');
+  }
+}
+
+async function processProductPhotos(indexes = null) {
+  const targets = indexes || PHOTO_QUEUE.map((_, i) => i).filter(i => PHOTO_QUEUE[i].status !== 'done');
+  for (const i of targets) {
+    const item = PHOTO_QUEUE[i];
+    if (!item || !item.file) continue;
+    item.status = 'working'; item.error = null; renderPhotoQueue();
+    try {
+      item.data = await compressImage(item.file, 900, 900, 0.72);
+      item.status = 'done';
+    } catch (err) {
+      item.status = 'error';
+      item.error = (err && err.message) ? err.message : 'Could not read file';
+    }
+    renderPhotoQueue();
+  }
+  return PHOTO_QUEUE.filter(x => x.status === 'error').length;
+}
+
+function removeProductPhoto(index) {
+  if (!PHOTO_QUEUE[index]) return;
+  PHOTO_QUEUE.splice(index, 1);
+  renderPhotoQueue();
+  syncPhotosToSavedProduct();
+  showToast('✓ Photo removed');
+}
+
+function syncPhotosToSavedProduct() {
+  if (!PHOTO_TARGET_SLUG) return;
+  const prod = STORE.products.find(x => x.slug === PHOTO_TARGET_SLUG);
+  if (!prod) return;
+  const good = PHOTO_QUEUE.filter(x => x.status === 'done' && x.data).map(x => x.data);
+  prod.images = good.length ? good : ['images/products/1.jpeg'];
+  saveStore('products');
+  render();
+}
+
+async function saveProductForm(e, existingSlug) {
+  e.preventDefault();
+  const submitBtn = e.target ? e.target.querySelector('button[type=submit]') : null;
+  if (submitBtn) {
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.dataset.label = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+  try {
+    const name = document.getElementById('pName').value.trim();
+    const cat = document.getElementById('pCat').value;
+    const stock = parseInt(document.getElementById('pStock').value) || 50;
+    const price = parseFloat(document.getElementById('pPrice').value);
+    const offerPrice = parseFloat(document.getElementById('pOfferPrice').value) || null;
+    const material = document.getElementById('pMaterial').value.trim();
+    const desc = document.getElementById('pDesc').value.trim();
+    const featured = document.getElementById('pFeatured').checked;
+
+    if (!name) { showToast('❌ Product name is required.'); return; }
+    if (!isFinite(price)) { showToast('❌ Enter valid price.'); return; }
+
+    if (PHOTO_QUEUE.length) {
+      if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing photos...';
+      await processProductPhotos();
+    }
+
+    let imageSrcs = PHOTO_QUEUE.filter(x => x.status === 'done' && x.data).map(x => x.data);
+    if (!imageSrcs.length) {
+      imageSrcs = existingSlug ? (STORE.products.find(x => x.slug === existingSlug)?.images || ['images/products/1.jpeg']) : ['images/products/1.jpeg'];
+    }
+
+    const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('prod-' + Date.now()));
+
+    const productData = {
+      slug, name, category: cat, shortDesc: desc, description: desc, material,
+      sizes: ["8x10 in","12x16 in","16x20 in"], colors: ["Gold"], images: imageSrcs,
+      price, offerPrice, stock, rating: 5.0, reviews: 1, featured
+    };
+
+    if (existingSlug) {
+      const idx = STORE.products.findIndex(x => x.slug === existingSlug);
+      if (idx >= 0) STORE.products[idx] = productData;
+      else STORE.products.unshift(productData);
+    } else {
+      STORE.products.unshift(productData);
+    }
+
+    saveStore('products');
+    closeModal();
+    showToast('✓ Product saved successfully!');
+    render();
+  } catch (err) {
+    console.error('Save product error:', err);
+    showToast('❌ Error saving product: ' + (err && err.message ? err.message : err));
+  } finally {
+    if (submitBtn && document.body.contains(submitBtn)) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = submitBtn.dataset.label || 'Save Product';
+    }
+  }
+}
+
+function deleteProduct(slug) {
+  if (confirm('Are you sure you want to delete this product?')) {
+    STORE.products = (STORE.products || []).filter(x => x.slug !== slug);
+    saveStore('products');
+    showToast('✓ Product deleted');
+    render();
+  }
+}
+
+// ---------------- CATEGORY CRUD ----------------
+
 function renderAdminCategories() {
   return `
     <div>
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h2 class="font-display text-2xl font-bold text-gold-200">Manage Categories</h2>
-          <p class="text-xs text-ivory-100/60 font-gujarati mt-1">કેટેગરીનું સ્થાન બદલવા માટે ⬆ ⬇ એરો બટન વાપરો.</p>
         </div>
         <button onclick="openCategoryModal()" class="btn-luxury !py-2.5 !px-5 text-xs">
           <i class="fa-solid fa-plus"></i> Add New Category
@@ -587,6 +864,102 @@ function renderAdminCategories() {
   `;
 }
 
+function moveCategory(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= STORE.categories.length) return;
+  const temp = STORE.categories[index];
+  STORE.categories[index] = STORE.categories[newIndex];
+  STORE.categories[newIndex] = temp;
+  saveStore('categories');
+  showToast('✓ Category reordered');
+  render();
+}
+
+function openCategoryModal(existingSlug = null) {
+  const c = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
+  const mc = document.getElementById('modalContainer');
+  if (!mc) return;
+  mc.innerHTML = `
+    <div class="modal-overlay">
+      <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">${c ? 'Edit Category' : 'Add Category'}</h3>
+          <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <form onsubmit="saveCategoryForm(event, '${existingSlug || ''}')" class="mt-6 space-y-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (English)</label>
+            <input id="cName" required value="${c ? escapeHTML(c.name) : ''}" class="admin-input" placeholder="e.g. Mataji Paat (Bajot)" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (Gujarati)</label>
+            <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <textarea id="cDesc" rows="2" class="admin-input">${c ? escapeHTML(c.description || '') : ''}</textarea>
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image</label>
+            <input id="cCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
+          </div>
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+            <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> ${c ? 'Update Category' : 'Save Category'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+async function saveCategoryForm(e, existingSlug) {
+  e.preventDefault();
+  try {
+    const name = document.getElementById('cName').value.trim();
+    const nameGu = document.getElementById('cNameGu').value.trim();
+    const desc = document.getElementById('cDesc').value.trim();
+    const file = document.getElementById('cCoverFile').files?.[0];
+
+    const existingCat = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
+    let cover = existingCat ? existingCat.cover : 'images/products/3.jpeg';
+    if (file) cover = await compressImage(file, 1200, 1200, 0.88);
+
+    const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
+
+    const categoryData = { slug, name, nameGu, description: desc, cover, icon: existingCat?.icon || 'fa-box', featured: true };
+
+    if (existingSlug) {
+      const idx = STORE.categories.findIndex(x => x.slug === existingSlug);
+      if (idx >= 0) STORE.categories[idx] = categoryData;
+      else STORE.categories.push(categoryData);
+    } else {
+      STORE.categories.push(categoryData);
+    }
+
+    saveStore('categories');
+    closeModal();
+    showToast(existingSlug ? '✓ Category updated!' : '✓ Category added!');
+    render();
+  } catch (err) {
+    console.error('Save category error:', err);
+    showToast('❌ Error saving category.');
+  }
+}
+
+function deleteCategory(slug) {
+  if (confirm('Delete this category? Products in this category will remain.')) {
+    STORE.categories = STORE.categories.filter(c => c.slug !== slug);
+    saveStore('categories');
+    showToast('✓ Category deleted');
+    render();
+  }
+}
+
+// ---------------- OFFER CRUD ----------------
+
 function renderAdminOffers() {
   return `
     <div>
@@ -627,6 +1000,86 @@ function renderAdminOffers() {
   `;
 }
 
+function openOfferModal(existingIdx = null) {
+  const o = (existingIdx !== null && existingIdx !== undefined) ? STORE.offers[existingIdx] : null;
+  const mc = document.getElementById('modalContainer');
+  if (!mc) return;
+  mc.innerHTML = `
+    <div class="modal-overlay">
+      <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">${o ? 'Edit Offer' : 'Add Offer'}</h3>
+          <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <form onsubmit="saveOfferForm(event, ${existingIdx !== null && existingIdx !== undefined ? existingIdx : 'null'})" class="mt-6 space-y-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Title</label>
+            <input id="oTitle" required value="${o ? escapeHTML(o.title) : ''}" class="admin-input" placeholder="e.g. Diwali Divine Offer" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Badge Tag</label>
+            <input id="oBadge" value="${o ? escapeHTML(o.badge) : ''}" class="admin-input" placeholder="FESTIVAL SPECIAL" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <textarea id="oDesc" rows="2" class="admin-input">${o ? escapeHTML(o.description) : ''}</textarea>
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image</label>
+            <input id="oCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
+          </div>
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+            <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-floppy-disk"></i> ${o ? 'Update Offer' : 'Save Offer'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+async function saveOfferForm(e, existingIdx) {
+  e.preventDefault();
+  try {
+    const title = document.getElementById('oTitle').value.trim();
+    const badge = document.getElementById('oBadge').value.trim() || 'PROMO';
+    const desc = document.getElementById('oDesc').value.trim();
+    const file = document.getElementById('oCoverFile').files?.[0];
+
+    const existingOffer = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null') ? STORE.offers[existingIdx] : null;
+    let image = existingOffer ? existingOffer.image : 'images/products/16.jpeg';
+    if (file) image = await compressImage(file, 1200, 1200, 0.88);
+
+    const offerData = { id: existingOffer ? existingOffer.id : ('off-' + Date.now()), title, badge, description: desc, image };
+
+    if (existingOffer) {
+      STORE.offers[existingIdx] = offerData;
+    } else {
+      STORE.offers.push(offerData);
+    }
+
+    saveStore('offers');
+    closeModal();
+    showToast(existingOffer ? '✓ Offer updated!' : '✓ Offer added!');
+    render();
+  } catch (err) {
+    console.error('Save offer error:', err);
+    showToast('❌ Error saving offer.');
+  }
+}
+
+function deleteOffer(idx) {
+  if (confirm('Delete this offer?')) {
+    STORE.offers.splice(idx, 1);
+    saveStore('offers');
+    showToast('✓ Offer deleted');
+    render();
+  }
+}
+
+// ---------------- GALLERY CRUD ----------------
+
 function renderAdminGallery() {
   return `
     <div>
@@ -650,6 +1103,82 @@ function renderAdminGallery() {
       </div>
     </div>
   `;
+}
+
+function openGalleryModal() {
+  const mc = document.getElementById('modalContainer');
+  if (!mc) return;
+  mc.innerHTML = `
+    <div class="modal-overlay">
+      <div class="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 animate-page-entry">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h3 class="font-display text-2xl font-bold text-gradient-gold">Upload Gallery Photo</h3>
+          <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <form onsubmit="saveGalleryForm(event)" class="mt-6 space-y-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Photo Title</label>
+            <input id="gTitle" required class="admin-input" placeholder="e.g. Gold Temple Arch Installation" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Select Photo File</label>
+            <input id="gFile" type="file" accept="image/*" required class="admin-input text-xs" />
+          </div>
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+            <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
+            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-upload"></i> Upload</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+async function saveGalleryForm(e) {
+  e.preventDefault();
+  const title = document.getElementById('gTitle').value.trim();
+  const file = document.getElementById('gFile').files?.[0];
+  if (!file) return;
+
+  const image = await compressImage(file, 900, 900, 0.85);
+  STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
+  saveStore('gallery');
+  closeModal();
+  showToast('✓ Photo uploaded to gallery');
+  render();
+}
+
+function deleteGalleryItem(idx) {
+  if (confirm('Delete this photo from gallery?')) {
+    STORE.gallery.splice(idx, 1);
+    saveStore('gallery');
+    showToast('✓ Photo deleted');
+    render();
+  }
+}
+
+// ---------------- NEWSLETTER & SUBSCRIBERS ----------------
+
+function handleNewsletterSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('newsletterEmail');
+  const msg = document.getElementById('newsletterMsg');
+  const email = input ? input.value.trim() : '';
+
+  if (email) {
+    if (!STORE.subscribers) STORE.subscribers = [];
+    if (!STORE.subscribers.some(s => s.email === email)) {
+      STORE.subscribers.push({ email: email, date: new Date().toLocaleDateString('en-IN') });
+      saveStore('subscribers');
+    }
+    if (msg) {
+      msg.textContent = '✓ Thank you! Your email has been subscribed.';
+      msg.className = 'mt-2 text-xs text-emerald-400 font-semibold block';
+      setTimeout(() => msg.classList.add('hidden'), 5000);
+    }
+    if (input) input.value = '';
+  }
 }
 
 function renderAdminSubscribers() {
@@ -699,6 +1228,25 @@ function renderAdminSubscribers() {
   `;
 }
 
+function copySubscribersList() {
+  const emails = (STORE.subscribers || []).map(s => s.email).join(', ');
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(emails);
+  }
+  showToast('✓ All emails copied to clipboard!');
+}
+
+function deleteSubscriber(email) {
+  if (confirm(`Remove email (${email})?`)) {
+    STORE.subscribers = (STORE.subscribers || []).filter(s => s.email !== email);
+    saveStore('subscribers');
+    showToast('✓ Email removed');
+    render();
+  }
+}
+
+// ---------------- SECURITY ----------------
+
 function renderAdminSecurity() {
   return `
     <div class="max-w-xl mx-auto">
@@ -735,6 +1283,39 @@ function renderAdminSecurity() {
   `;
 }
 
+async function changeAdminPassword(e) {
+  e.preventDefault();
+  const curr = document.getElementById('currPass').value.trim();
+  const nxt = document.getElementById('newPass').value.trim();
+  const cnf = document.getElementById('confirmPass').value.trim();
+
+  if (nxt !== cnf) {
+    alert('New passwords do not match.');
+    return;
+  }
+
+  const storedHash = safeGetStorage('dpag_admin_hash', null);
+  const currHash = await hashPassword(curr);
+  const legacyPass = safeGetStorage('dpag_admin_pass', 'Darshan@2026');
+
+  if ((storedHash && currHash !== storedHash) && (curr !== legacyPass)) {
+    alert('Current password is incorrect.');
+    return;
+  }
+
+  const newHash = await hashPassword(nxt);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('dpag_admin_hash', newHash);
+    localStorage.setItem('dpag_admin_pass', nxt);
+  }
+  showToast('✓ Password updated securely!');
+  document.getElementById('currPass').value = '';
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+}
+
+// ---------------- BACKUP & JSON ----------------
+
 function renderAdminBackup() {
   return `
     <div class="max-w-2xl mx-auto glass-panel rounded-3xl p-8">
@@ -768,14 +1349,16 @@ async function adminLogin(e) {
     return;
   }
   
-  const storedHash = localStorage.getItem('dpag_admin_hash');
+  const storedHash = safeGetStorage('dpag_admin_hash', null);
   const inputHash = await hashPassword(p);
   const isValidPass = (storedHash ? inputHash === storedHash : inputHash === DEFAULT_ADMIN_HASH);
 
   if (u === 'admin' && isValidPass) {
     STORE.adminUser = { username: 'admin', loginTime: Date.now() };
-    localStorage.setItem('dpag_admin', JSON.stringify(STORE.adminUser));
-    localStorage.setItem('dpag_admin_hash', inputHash);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('dpag_admin', JSON.stringify(STORE.adminUser));
+      localStorage.setItem('dpag_admin_hash', inputHash);
+    }
     render();
   } else {
     const msg = document.getElementById('adminMsg');
@@ -789,11 +1372,15 @@ async function adminLogin(e) {
 
 function adminLogout() {
   STORE.adminUser = null;
-  localStorage.removeItem('dpag_admin');
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('dpag_admin');
+  }
   render();
 }
 
 function closeModal() {
+  PHOTO_QUEUE = [];
+  PHOTO_TARGET_SLUG = null;
   const mc = document.getElementById('modalContainer');
   if (mc) mc.innerHTML = '';
 }
@@ -802,7 +1389,9 @@ function exportDatabaseJSON() {
   const data = { PRODUCTS: STORE.products, CATEGORIES: STORE.categories, OFFERS: STORE.offers, GALLERY_ITEMS: STORE.gallery, SITE };
   const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
   const a = document.createElement('a'); a.setAttribute("href", str); a.setAttribute("download", "darshan_gallery_backup.json");
-  document.body.appendChild(a); a.click(); a.remove();
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.appendChild(a); a.click(); a.remove();
+  }
   showToast('✓ Backup downloaded!');
 }
 
@@ -849,7 +1438,9 @@ function openMediaLightbox(mediaUrl, mediaType = 'image', title = '', list = [],
     else { currentGalleryList = [normalizeMediaItem(mediaUrl, title)]; i = 0; }
   }
   currentGalleryIndex = i;
-  document.body.style.overflow = 'hidden';
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.style.overflow = 'hidden';
+  }
   renderMediaLightbox();
 }
 
@@ -907,17 +1498,9 @@ function navLightbox(dir) {
 function closeMediaLightbox() {
   const mc = document.getElementById('modalContainer');
   if (mc) mc.innerHTML = '';
-  document.body.style.overflow = '';
-}
-
-if (!window.__dpagLightboxKeys) {
-  window.__dpagLightboxKeys = true;
-  document.addEventListener('keydown', (e) => {
-    if (!document.getElementById('mediaLightbox')) return;
-    if (e.key === 'Escape') closeMediaLightbox();
-    else if (e.key === 'ArrowLeft') navLightbox(-1);
-    else if (e.key === 'ArrowRight') navLightbox(1);
-  });
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.style.overflow = '';
+  }
 }
 
 function populateFooter() {
@@ -972,8 +1555,8 @@ function render() {
   else { content = renderHome(); }
 
   app.innerHTML = `<div class="animate-page-entry">${content}</div>`;
-  document.title = title;
-  window.scrollTo(0, 0);
+  if (typeof document !== 'undefined') document.title = title;
+  if (typeof window !== 'undefined') window.scrollTo(0, 0);
   setTimeout(initAfterRender, 50);
 }
 
@@ -982,116 +1565,164 @@ function initAfterRender() {
   if (typeof initScrollReveal === 'function') requestAnimationFrame(() => setTimeout(initScrollReveal, 60));
 }
 
-// Global Initialization
-window.addEventListener('hashchange', render);
-window.addEventListener('DOMContentLoaded', async () => {
-  await loadDataStoreFromJSON();
-  populateFooter();
-  updateBadges();
-  if (typeof initFirebaseSync === 'function') initFirebaseSync();
-  if (typeof initCustomCursor === 'function') initCustomCursor();
-  if (typeof initScrollListeners === 'function') initScrollListeners();
-  render();
-  setTimeout(() => {
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => loader.style.display = 'none', 300);
+// Bind ALL Admin and Navigation Handlers to global window object
+if (typeof window !== 'undefined') {
+  if (!window.__dpagLightboxKeys) {
+    window.__dpagLightboxKeys = true;
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('mediaLightbox')) return;
+      if (e.key === 'Escape') closeMediaLightbox();
+      else if (e.key === 'ArrowLeft') navLightbox(-1);
+      else if (e.key === 'ArrowRight') navLightbox(1);
+    });
+  }
+
+  window.getRoute = getRoute;
+  window.navigate = navigate;
+  window.render = render;
+  window.setAdminTab = setAdminTab;
+  window.renderAdmin = renderAdmin;
+  window.renderAdminProducts = renderAdminProducts;
+  window.openProductModal = openProductModal;
+  window.saveProductForm = saveProductForm;
+  window.deleteProduct = deleteProduct;
+  window.handleProductPhotoSelect = handleProductPhotoSelect;
+  window.handleProductPhotoDrop = handleProductPhotoDrop;
+  window.removeProductPhoto = removeProductPhoto;
+  window.moveCategory = moveCategory;
+  window.openCategoryModal = openCategoryModal;
+  window.saveCategoryForm = saveCategoryForm;
+  window.deleteCategory = deleteCategory;
+  window.openOfferModal = openOfferModal;
+  window.saveOfferForm = saveOfferForm;
+  window.deleteOffer = deleteOffer;
+  window.openGalleryModal = openGalleryModal;
+  window.saveGalleryForm = saveGalleryForm;
+  window.deleteGalleryItem = deleteGalleryItem;
+  window.handleNewsletterSubmit = handleNewsletterSubmit;
+  window.copySubscribersList = copySubscribersList;
+  window.deleteSubscriber = deleteSubscriber;
+  window.changeAdminPassword = changeAdminPassword;
+  window.adminLogin = adminLogin;
+  window.adminLogout = adminLogout;
+  window.closeModal = closeModal;
+  window.exportDatabaseJSON = exportDatabaseJSON;
+  window.importDatabaseJSON = importDatabaseJSON;
+  window.openMediaLightbox = openMediaLightbox;
+  window.closeMediaLightbox = closeMediaLightbox;
+  window.navLightbox = navLightbox;
+
+  // Global Initialization
+  window.addEventListener('hashchange', render);
+  window.addEventListener('DOMContentLoaded', async () => {
+    await loadDataStoreFromJSON();
+    populateFooter();
+    updateBadges();
+    if (typeof initFirebaseSync === 'function') initFirebaseSync();
+    if (typeof initCustomCursor === 'function') initCustomCursor();
+    if (typeof initScrollListeners === 'function') initScrollListeners();
+    render();
+    setTimeout(() => {
+      const loader = document.getElementById('loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 300);
+      }
+    }, 250);
+
+    // Search Button & Drawer Listeners
+    const menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        const mob = document.getElementById('mobileMenu');
+        if (mob) mob.classList.remove('hidden');
+        const nav = document.getElementById('mobileNav');
+        if (nav) {
+          nav.innerHTML = `
+            <a href="#/home" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>Home</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="#/catalog" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>Catalog</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="#/gallery" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>Gallery</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="#/offers" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>Offers</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="#/about" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>About Us</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="#/contact" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
+              <span>Contact</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
+            </a>
+            <a href="${waLink()}" target="_blank" rel="noopener noreferrer" class="btn-luxury mt-6 justify-center w-full">
+              <i class="fa-brands fa-whatsapp text-base"></i> Chat on WhatsApp
+            </a>
+          `;
+        }
+      });
     }
-  }, 250);
 
-  // Search Button & Drawer Listeners
-  const menuBtn = document.getElementById('menuBtn');
-  if (menuBtn) {
-    menuBtn.addEventListener('click', () => {
-      const mob = document.getElementById('mobileMenu');
-      if (mob) mob.classList.remove('hidden');
-      const nav = document.getElementById('mobileNav');
-      if (nav) {
-        nav.innerHTML = `
-          <a href="#/home" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>Home</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="#/catalog" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>Catalog</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="#/gallery" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>Gallery</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="#/offers" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>Offers</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="#/about" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>About Us</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="#/contact" onclick="document.getElementById('mobileMenu').classList.add('hidden')" class="py-3 text-base font-display text-ivory-100 border-b border-white/10 flex items-center justify-between">
-            <span>Contact</span> <i class="fa-solid fa-chevron-right text-xs text-gold-400/60"></i>
-          </a>
-          <a href="${waLink()}" target="_blank" rel="noopener noreferrer" class="btn-luxury mt-6 justify-center w-full">
-            <i class="fa-brands fa-whatsapp text-base"></i> Chat on WhatsApp
-          </a>
-        `;
-      }
-    });
-  }
+    const closeMenu = document.getElementById('closeMenu');
+    if (closeMenu) {
+      closeMenu.addEventListener('click', () => {
+        const mob = document.getElementById('mobileMenu');
+        if (mob) mob.classList.add('hidden');
+      });
+    }
 
-  const closeMenu = document.getElementById('closeMenu');
-  if (closeMenu) {
-    closeMenu.addEventListener('click', () => {
-      const mob = document.getElementById('mobileMenu');
-      if (mob) mob.classList.add('hidden');
-    });
-  }
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        const overlay = document.getElementById('searchOverlay');
+        if (overlay) {
+          overlay.classList.remove('hidden');
+          overlay.classList.add('flex');
+          setTimeout(() => document.getElementById('searchInput')?.focus(), 200);
+        }
+      });
+    }
 
-  const searchBtn = document.getElementById('searchBtn');
-  if (searchBtn) {
-    searchBtn.addEventListener('click', () => {
-      const overlay = document.getElementById('searchOverlay');
-      if (overlay) {
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-        setTimeout(() => document.getElementById('searchInput')?.focus(), 200);
-      }
-    });
-  }
+    const closeSearch = document.getElementById('closeSearch');
+    if (closeSearch) {
+      closeSearch.addEventListener('click', () => {
+        const overlay = document.getElementById('searchOverlay');
+        if (overlay) {
+          overlay.classList.add('hidden');
+          overlay.classList.remove('flex');
+        }
+      });
+    }
 
-  const closeSearch = document.getElementById('closeSearch');
-  if (closeSearch) {
-    closeSearch.addEventListener('click', () => {
-      const overlay = document.getElementById('searchOverlay');
-      if (overlay) {
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-      }
-    });
-  }
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        const res = document.getElementById('searchResults');
+        if (!res) return;
+        if (!q) { res.innerHTML = ''; return; }
+        const matches = (STORE.products || []).filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).slice(0, 5);
+        if (!matches.length) { res.innerHTML = '<p class="glass-panel p-4 text-xs text-ivory-100/60">No products found.</p>'; return; }
+        res.innerHTML = matches.map(p => `
+          <a href="#/product/${escapeHTML(p.slug)}" onclick="document.getElementById('closeSearch')?.click()" class="glass-panel flex items-center gap-4 p-3 rounded-2xl hover:border-gold-400/60 transition">
+            <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover" />
+            <div><p class="text-sm font-bold text-ivory-100">${escapeHTML(p.name)}</p><p class="text-xs text-gold-300">${formatPrice(p.offerPrice || p.price)}</p></div>
+          </a>
+        `).join('');
+      });
+    }
 
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      const res = document.getElementById('searchResults');
-      if (!res) return;
-      if (!q) { res.innerHTML = ''; return; }
-      const matches = (STORE.products || []).filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).slice(0, 5);
-      if (!matches.length) { res.innerHTML = '<p class="glass-panel p-4 text-xs text-ivory-100/60">No products found.</p>'; return; }
-      res.innerHTML = matches.map(p => `
-        <a href="#/product/${escapeHTML(p.slug)}" onclick="document.getElementById('closeSearch')?.click()" class="glass-panel flex items-center gap-4 p-3 rounded-2xl hover:border-gold-400/60 transition">
-          <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover" />
-          <div><p class="text-sm font-bold text-ivory-100">${escapeHTML(p.name)}</p><p class="text-xs text-gold-300">${formatPrice(p.offerPrice || p.price)}</p></div>
-        </a>
-      `).join('');
-    });
-  }
-
-  const langBtn = document.getElementById('langBtn');
-  if (langBtn) {
-    langBtn.addEventListener('click', () => {
-      currentLang = currentLang === 'en' ? 'gu' : 'en';
-      localStorage.setItem('dpag_lang', currentLang);
-      const label = document.getElementById('langLabel');
-      if (label) label.textContent = currentLang === 'en' ? 'EN' : 'ગુ';
-      render();
-    });
-  }
-});
+    const langBtn = document.getElementById('langBtn');
+    if (langBtn) {
+      langBtn.addEventListener('click', () => {
+        currentLang = currentLang === 'en' ? 'gu' : 'en';
+        if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_lang', currentLang);
+        const label = document.getElementById('langLabel');
+        if (label) label.textContent = currentLang === 'en' ? 'EN' : 'ગુ';
+        render();
+      });
+    }
+  });
+}
