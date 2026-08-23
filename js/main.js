@@ -694,8 +694,24 @@ function openProductModal(editSlug = null, defaultCategory = null) {
   PHOTO_QUEUE = (p && Array.isArray(p.images) ? p.images : []).map((src, i) => ({
     file: null, name: 'Photo ' + (i + 1), status: 'done', data: src, error: null, existing: true
   }));
-  const mc = document.getElementById('modalContainer');
-  if (!mc) return;
+
+  let mc = document.getElementById('modalContainer');
+  if (!mc) {
+    mc = document.createElement('div');
+    mc.id = 'modalContainer';
+    document.body.appendChild(mc);
+  }
+
+  const availableCats = (STORE.categories && STORE.categories.length)
+    ? STORE.categories
+    : [
+        { slug: 'mataji-frames', name: 'Mataji Paat (Bajot)' },
+        { slug: 'gold-work-temple', name: 'Gold Work Temple Photo' },
+        { slug: 'heavy-lighting-photo', name: 'Heavy Lighting Photo' },
+        { slug: 'led-light-photos', name: 'LED Light Photos' },
+        { slug: 'momentos', name: 'Momentos & Trophies' },
+        { slug: 'acrylic-wall-photo', name: 'Acrylic Wall Photo' }
+      ];
 
   mc.innerHTML = `
     <div class="modal-overlay">
@@ -705,7 +721,7 @@ function openProductModal(editSlug = null, defaultCategory = null) {
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
-        <form onsubmit="saveProductForm(event, '${p ? p.slug : ''}')" class="mt-6 space-y-4">
+        <form onsubmit="saveProductForm(event, ${p ? `'${escapeHTML(p.slug)}'` : 'null'})" class="mt-6 space-y-4">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Name</label>
             <input id="pName" required value="${p ? escapeHTML(p.name) : ''}" class="admin-input" placeholder="e.g. Royal Gold Mataji Frame" />
@@ -714,7 +730,7 @@ function openProductModal(editSlug = null, defaultCategory = null) {
             <div>
               <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category</label>
               <select id="pCat" class="admin-input">
-                ${STORE.categories.map(c => {
+                ${availableCats.map(c => {
                   const isSelected = (activeCatSlug && (activeCatSlug === c.slug || activeCatSlug === c.name || activeCatSlug.toLowerCase() === c.slug.toLowerCase()));
                   return `<option value="${escapeHTML(c.slug)}" ${isSelected ? 'selected' : ''}>${escapeHTML(c.name)} ${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</option>`;
                 }).join('')}
@@ -810,6 +826,16 @@ function handleProductPhotoDrop(e) {
   queueFiles(e.dataTransfer && e.dataTransfer.files);
 }
 
+function handleProductPhotoReplaceFile(e) {
+  if (PHOTO_REPLACE_INDEX !== null && e.target && e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+    PHOTO_QUEUE[PHOTO_REPLACE_INDEX] = { file: file, name: file.name, status: 'pending', data: null, error: null, existing: false };
+    renderPhotoQueue();
+    processProductPhotos([PHOTO_REPLACE_INDEX]).then(() => syncPhotosToSavedProduct());
+    e.target.value = '';
+  }
+}
+
 function renderPhotoQueue() {
   const wrap = document.getElementById('pUploadProgress');
   if (!wrap) return;
@@ -896,31 +922,47 @@ async function saveProductForm(e, existingSlug) {
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   }
   try {
-    const name = document.getElementById('pName').value.trim();
-    const cat = document.getElementById('pCat').value;
-    const stock = parseInt(document.getElementById('pStock').value) || 50;
-    const priceVal = document.getElementById('pPrice').value.trim();
-    const price = priceVal !== '' ? parseFloat(priceVal) : 0;
-    const offerVal = document.getElementById('pOfferPrice').value.trim();
-    const offerPrice = offerVal !== '' ? parseFloat(offerVal) : null;
-    const material = document.getElementById('pMaterial').value.trim();
-    const desc = document.getElementById('pDesc').value.trim();
-    const featured = document.getElementById('pFeatured').checked;
-
+    const nameEl = document.getElementById('pName');
+    const name = nameEl ? nameEl.value.trim() : '';
     if (!name) { showToast('❌ Product name is required.'); return; }
+
+    const catEl = document.getElementById('pCat');
+    const cat = catEl && catEl.value ? catEl.value : (STORE.categories?.[0]?.slug || 'mataji-frames');
+
+    const stockEl = document.getElementById('pStock');
+    const stock = stockEl ? (parseInt(stockEl.value) || 50) : 50;
+
+    const priceEl = document.getElementById('pPrice');
+    const priceVal = priceEl ? priceEl.value.trim() : '';
+    const price = priceVal !== '' ? parseFloat(priceVal) : 0;
+
+    const offerEl = document.getElementById('pOfferPrice');
+    const offerVal = offerEl ? offerEl.value.trim() : '';
+    const offerPrice = offerVal !== '' ? parseFloat(offerVal) : null;
+
+    const matEl = document.getElementById('pMaterial');
+    const material = matEl ? matEl.value.trim() : '';
+
+    const descEl = document.getElementById('pDesc');
+    const desc = descEl ? descEl.value.trim() : '';
+
+    const featEl = document.getElementById('pFeatured');
+    const featured = featEl ? featEl.checked : false;
 
     if (PHOTO_QUEUE.length) {
       if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing photos...';
       await processProductPhotos();
     }
 
+    const targetSlug = (existingSlug && existingSlug !== 'null' && existingSlug !== 'undefined' && existingSlug !== '') ? existingSlug : null;
+
     let imageSrcs = PHOTO_QUEUE.filter(x => x.status === 'done' && x.data).map(x => x.data);
     if (!imageSrcs.length) {
-      imageSrcs = existingSlug ? (STORE.products.find(x => x.slug === existingSlug)?.images || ['images/products/1.jpeg']) : ['images/products/1.jpeg'];
+      imageSrcs = targetSlug ? (STORE.products.find(x => x.slug === targetSlug)?.images || ['images/products/1.jpeg']) : ['images/products/1.jpeg'];
     }
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('prod-' + Date.now()));
+    const slug = targetSlug || (cleanSlug.length > 0 ? cleanSlug : ('prod-' + Date.now()));
 
     const productData = {
       slug, name, category: cat, shortDesc: desc, description: desc, material,
@@ -928,8 +970,8 @@ async function saveProductForm(e, existingSlug) {
       price: isNaN(price) ? 0 : price, offerPrice: isNaN(offerPrice) ? null : offerPrice, stock, rating: 5.0, reviews: 1, featured
     };
 
-    if (existingSlug) {
-      const idx = STORE.products.findIndex(x => x.slug === existingSlug);
+    if (targetSlug) {
+      const idx = STORE.products.findIndex(x => x.slug === targetSlug);
       if (idx >= 0) STORE.products[idx] = productData;
       else STORE.products.unshift(productData);
     } else {
@@ -952,6 +994,7 @@ async function saveProductForm(e, existingSlug) {
 }
 
 function deleteProduct(slug) {
+  if (!slug) return;
   if (confirm('Are you sure you want to delete this product?')) {
     STORE.products = (STORE.products || []).filter(x => x.slug !== slug);
     saveStore('products');
@@ -1022,8 +1065,13 @@ function moveCategory(index, direction) {
 
 function openCategoryModal(existingSlug = null) {
   const c = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
-  const mc = document.getElementById('modalContainer');
-  if (!mc) return;
+  let mc = document.getElementById('modalContainer');
+  if (!mc) {
+    mc = document.createElement('div');
+    mc.id = 'modalContainer';
+    document.body.appendChild(mc);
+  }
+
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
@@ -1032,7 +1080,7 @@ function openCategoryModal(existingSlug = null) {
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
-        <form onsubmit="saveCategoryForm(event, '${existingSlug || ''}')" class="mt-6 space-y-4">
+        <form onsubmit="saveCategoryForm(event, ${existingSlug ? `'${escapeHTML(existingSlug)}'` : 'null'})" class="mt-6 space-y-4">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (English)</label>
             <input id="cName" required value="${c ? escapeHTML(c.name) : ''}" class="admin-input" placeholder="e.g. Mataji Paat (Bajot)" />
@@ -1062,22 +1110,30 @@ function openCategoryModal(existingSlug = null) {
 async function saveCategoryForm(e, existingSlug) {
   e.preventDefault();
   try {
-    const name = document.getElementById('cName').value.trim();
-    const nameGu = document.getElementById('cNameGu').value.trim();
-    const desc = document.getElementById('cDesc').value.trim();
-    const file = document.getElementById('cCoverFile').files?.[0];
+    const nameEl = document.getElementById('cName');
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { showToast('❌ Category name is required.'); return; }
 
-    const existingCat = existingSlug ? STORE.categories.find(x => x.slug === existingSlug) : null;
+    const nameGuEl = document.getElementById('cNameGu');
+    const nameGu = nameGuEl ? nameGuEl.value.trim() : '';
+
+    const descEl = document.getElementById('cDesc');
+    const desc = descEl ? descEl.value.trim() : '';
+
+    const file = document.getElementById('cCoverFile')?.files?.[0];
+
+    const targetSlug = (existingSlug && existingSlug !== 'null' && existingSlug !== 'undefined' && existingSlug !== '') ? existingSlug : null;
+    const existingCat = targetSlug ? STORE.categories.find(x => x.slug === targetSlug) : null;
     let cover = existingCat ? existingCat.cover : 'images/products/3.jpeg';
     if (file) cover = await compressImage(file, 600, 600, 0.65);
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const slug = existingSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
+    const slug = targetSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
 
     const categoryData = { slug, name, nameGu, description: desc, cover, icon: existingCat?.icon || 'fa-box', featured: true };
 
-    if (existingSlug) {
-      const idx = STORE.categories.findIndex(x => x.slug === existingSlug);
+    if (targetSlug) {
+      const idx = STORE.categories.findIndex(x => x.slug === targetSlug);
       if (idx >= 0) STORE.categories[idx] = categoryData;
       else STORE.categories.push(categoryData);
     } else {
@@ -1086,7 +1142,7 @@ async function saveCategoryForm(e, existingSlug) {
 
     saveStore('categories');
     closeModal();
-    showToast(existingSlug ? '✓ Category updated!' : '✓ Category added!');
+    showToast(targetSlug ? '✓ Category updated!' : '✓ Category added!');
     render();
   } catch (err) {
     console.error('Save category error:', err);
@@ -1095,8 +1151,9 @@ async function saveCategoryForm(e, existingSlug) {
 }
 
 function deleteCategory(slug) {
+  if (!slug) return;
   if (confirm('Delete this category? Products in this category will remain.')) {
-    STORE.categories = STORE.categories.filter(c => c.slug !== slug);
+    STORE.categories = (STORE.categories || []).filter(c => c.slug !== slug);
     saveStore('categories');
     showToast('✓ Category deleted');
     render();
@@ -1147,8 +1204,13 @@ function renderAdminOffers() {
 
 function openOfferModal(existingIdx = null) {
   const o = (existingIdx !== null && existingIdx !== undefined) ? STORE.offers[existingIdx] : null;
-  const mc = document.getElementById('modalContainer');
-  if (!mc) return;
+  let mc = document.getElementById('modalContainer');
+  if (!mc) {
+    mc = document.createElement('div');
+    mc.id = 'modalContainer';
+    document.body.appendChild(mc);
+  }
+
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
@@ -1187,18 +1249,20 @@ function openOfferModal(existingIdx = null) {
 async function saveOfferForm(e, existingIdx) {
   e.preventDefault();
   try {
-    const title = document.getElementById('oTitle').value.trim();
-    const badge = document.getElementById('oBadge').value.trim() || 'PROMO';
-    const desc = document.getElementById('oDesc').value.trim();
-    const file = document.getElementById('oCoverFile').files?.[0];
+    const title = document.getElementById('oTitle')?.value.trim();
+    if (!title) { showToast('❌ Offer title is required.'); return; }
+    const badge = document.getElementById('oBadge')?.value.trim() || 'PROMO';
+    const desc = document.getElementById('oDesc')?.value.trim() || '';
+    const file = document.getElementById('oCoverFile')?.files?.[0];
 
-    const existingOffer = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null') ? STORE.offers[existingIdx] : null;
+    const hasIdx = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null');
+    const existingOffer = hasIdx ? STORE.offers[existingIdx] : null;
     let image = existingOffer ? existingOffer.image : 'images/products/16.jpeg';
     if (file) image = await compressImage(file, 600, 600, 0.65);
 
     const offerData = { id: existingOffer ? existingOffer.id : ('off-' + Date.now()), title, badge, description: desc, image };
 
-    if (existingOffer) {
+    if (hasIdx && existingIdx >= 0 && existingIdx < STORE.offers.length) {
       STORE.offers[existingIdx] = offerData;
     } else {
       STORE.offers.push(offerData);
@@ -1206,7 +1270,7 @@ async function saveOfferForm(e, existingIdx) {
 
     saveStore('offers');
     closeModal();
-    showToast(existingOffer ? '✓ Offer updated!' : '✓ Offer added!');
+    showToast(hasIdx ? '✓ Offer updated!' : '✓ Offer added!');
     render();
   } catch (err) {
     console.error('Save offer error:', err);
@@ -1251,8 +1315,13 @@ function renderAdminGallery() {
 }
 
 function openGalleryModal() {
-  const mc = document.getElementById('modalContainer');
-  if (!mc) return;
+  let mc = document.getElementById('modalContainer');
+  if (!mc) {
+    mc = document.createElement('div');
+    mc.id = 'modalContainer';
+    document.body.appendChild(mc);
+  }
+
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 animate-page-entry">
@@ -1282,9 +1351,9 @@ function openGalleryModal() {
 
 async function saveGalleryForm(e) {
   e.preventDefault();
-  const title = document.getElementById('gTitle').value.trim();
-  const file = document.getElementById('gFile').files?.[0];
-  if (!file) return;
+  const title = document.getElementById('gTitle')?.value.trim();
+  const file = document.getElementById('gFile')?.files?.[0];
+  if (!title || !file) return;
 
   const image = await compressImage(file, 600, 600, 0.65);
   STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
@@ -1430,9 +1499,9 @@ function renderAdminSecurity() {
 
 async function changeAdminPassword(e) {
   e.preventDefault();
-  const curr = document.getElementById('currPass').value.trim();
-  const nxt = document.getElementById('newPass').value.trim();
-  const cnf = document.getElementById('confirmPass').value.trim();
+  const curr = document.getElementById('currPass')?.value.trim();
+  const nxt = document.getElementById('newPass')?.value.trim();
+  const cnf = document.getElementById('confirmPass')?.value.trim();
 
   if (nxt !== cnf) {
     alert('New passwords do not match.');
@@ -1454,9 +1523,9 @@ async function changeAdminPassword(e) {
     localStorage.setItem('dpag_admin_pass', nxt);
   }
   showToast('✓ Password updated securely!');
-  document.getElementById('currPass').value = '';
-  document.getElementById('newPass').value = '';
-  document.getElementById('confirmPass').value = '';
+  if (document.getElementById('currPass')) document.getElementById('currPass').value = '';
+  if (document.getElementById('newPass')) document.getElementById('newPass').value = '';
+  if (document.getElementById('confirmPass')) document.getElementById('confirmPass').value = '';
 }
 
 // ---------------- BACKUP & JSON ----------------
@@ -1591,8 +1660,12 @@ function openMediaLightbox(mediaUrl, mediaType = 'image', title = '', list = [],
 
 function renderMediaLightbox() {
   const item = currentGalleryList[currentGalleryIndex] || { url: '', type: 'image', title: '' };
-  const mc = document.getElementById('modalContainer');
-  if (!mc) return;
+  let mc = document.getElementById('modalContainer');
+  if (!mc) {
+    mc = document.createElement('div');
+    mc.id = 'modalContainer';
+    document.body.appendChild(mc);
+  }
   const url = safeMediaUrl(item.url);
   const isVideo = item.type === 'video' || /\.(mp4|webm|mov)$/i.test(item.url || '');
 
@@ -1735,6 +1808,7 @@ if (typeof window !== 'undefined') {
   window.deleteProduct = deleteProduct;
   window.handleProductPhotoSelect = handleProductPhotoSelect;
   window.handleProductPhotoDrop = handleProductPhotoDrop;
+  window.handleProductPhotoReplaceFile = handleProductPhotoReplaceFile;
   window.removeProductPhoto = removeProductPhoto;
   window.moveCategory = moveCategory;
   window.openCategoryModal = openCategoryModal;
