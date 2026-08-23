@@ -69,9 +69,11 @@ function discount(price, offer) {
 }
 
 /**
- * Displays floating toast message notification.
+ * Displays floating toast message notification with auto-fadeout.
  */
-function showToast(msg) {
+let toastTimeout = null;
+
+function showToast(msg, duration = 1800) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
@@ -81,7 +83,11 @@ function showToast(msg) {
   }
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    t.classList.remove('show');
+  }, duration);
 }
 
 /**
@@ -96,42 +102,4 @@ function safeMediaUrl(u) {
   } catch (e) {
     return u;
   }
-}
-
-/**
- * Canvas Image Compressor (Optimized 600px @ 0.65 quality for fast cloud & local storage).
- */
-function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.65) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if (w > h) {
-          if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-        } else {
-          if (h > maxHeight) { w = Math.round((w * maxHeight) / h); h = maxHeight; }
-        }
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, w, h);
-        let out = canvas.toDataURL('image/jpeg', quality);
-        let q = quality;
-        while (out.length > 200000 && q > 0.35) {
-          q -= 0.08;
-          out = canvas.toDataURL('image/jpeg', q);
-        }
-        resolve(out);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }

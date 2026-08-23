@@ -213,6 +213,7 @@ function renderProduct(slug) {
   const images = (p.images && p.images.length) ? p.images : ['images/products/1.jpeg'];
   currentProductImgIndex = 0;
   const hasPrice = p.price && Number(p.price) > 0;
+  const formattedSizes = (Array.isArray(p.sizes) ? p.sizes : (p.sizes ? [p.sizes] : ["8x10 in", "12x16 in", "16x20 in"])).map(s => escapeHTML(s)).join(', ');
 
   return `
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-10">
@@ -256,7 +257,7 @@ function renderProduct(slug) {
 
           <div class="mt-6 space-y-2 border-y border-white/10 py-4 text-xs text-ivory-100/70">
             <p><strong class="text-gold-300">Material:</strong> ${escapeHTML(p.material || '24K Gold Polish Teakwood')}</p>
-            <p><strong class="text-gold-300">Available Sizes:</strong> ${(p.sizes || []).join(', ')}</p>
+            <p><strong class="text-gold-300">Available Sizes:</strong> ${formattedSizes}</p>
             <p><strong class="text-gold-300">Rating:</strong> ⭐ ${p.rating || 5.0} / 5 (${p.reviews || 100}+ reviews)</p>
           </div>
 
@@ -537,12 +538,16 @@ function renderAdmin() {
 }
 
 function renderAdminProductRow(p) {
+  const sizesText = Array.isArray(p.sizes) ? p.sizes.join(', ') : (p.sizes || '8x10 in, 12x16 in, 16x20 in');
   return `
     <tr class="hover:bg-white/5 transition">
       <td class="p-3">
         <img src="${escapeHTML(p.images[0])}" class="h-12 w-12 rounded-xl object-cover border border-gold-400/30" />
       </td>
-      <td class="p-3 font-semibold text-ivory-100">${escapeHTML(p.name)}</td>
+      <td class="p-3">
+        <p class="font-semibold text-ivory-100">${escapeHTML(p.name)}</p>
+        <p class="text-[0.68rem] text-gold-300/80">Sizes: ${escapeHTML(sizesText)}</p>
+      </td>
       <td class="p-3 text-xs font-medium text-gold-300 whitespace-nowrap">
         ${escapeHTML(getCategoryLabel(p.category))}
       </td>
@@ -625,8 +630,7 @@ function renderAdminProducts() {
                   <table class="w-full text-left text-sm">
                     <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
                       <tr>
-                        <th class="p-3">Image</th>
-                        <th class="p-3">Product Name</th>
+                        <th class="p-3">Image &amp; Details</th>
                         <th class="p-3">Category</th>
                         <th class="p-3">Price</th>
                         <th class="p-3">Offer Price</th>
@@ -660,8 +664,7 @@ function renderAdminProducts() {
               <table class="w-full text-left text-sm">
                 <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
                   <tr>
-                    <th class="p-3">Image</th>
-                    <th class="p-3">Product Name</th>
+                    <th class="p-3">Image &amp; Details</th>
                     <th class="p-3">Category</th>
                     <th class="p-3">Price</th>
                     <th class="p-3">Offer Price</th>
@@ -713,6 +716,16 @@ function openProductModal(editSlug = null, defaultCategory = null) {
         { slug: 'acrylic-wall-photo', name: 'Acrylic Wall Photo' }
       ];
 
+  // Look up default sizes for category if adding new product
+  const catObj = availableCats.find(c => c.slug === activeCatSlug);
+  const defaultCategorySizes = (catObj && Array.isArray(catObj.sizes) && catObj.sizes.length)
+    ? catObj.sizes.join(', ')
+    : '8x10 in, 12x16 in, 16x20 in';
+
+  const productSizesText = p
+    ? (Array.isArray(p.sizes) ? p.sizes.join(', ') : (p.sizes || defaultCategorySizes))
+    : defaultCategorySizes;
+
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto animate-page-entry">
@@ -756,6 +769,11 @@ function openProductModal(editSlug = null, defaultCategory = null) {
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Material Details</label>
             <input id="pMaterial" value="${p ? escapeHTML(p.material || '') : ''}" class="admin-input" placeholder="e.g. 24K Gold Polish Teakwood" />
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated, e.g. 8x10 in, 12x16 in, 16x20 in)</span></label>
+            <input id="pSizes" value="${escapeHTML(productSizesText)}" class="admin-input" placeholder="e.g. 8x10 in, 12x16 in, 16x20 in, 20x24 in, Custom Size" />
           </div>
 
           <div>
@@ -943,6 +961,10 @@ async function saveProductForm(e, existingSlug) {
     const matEl = document.getElementById('pMaterial');
     const material = matEl ? matEl.value.trim() : '';
 
+    const sizesEl = document.getElementById('pSizes');
+    const sizesVal = sizesEl ? sizesEl.value.trim() : '';
+    const sizes = sizesVal ? sizesVal.split(',').map(s => s.trim()).filter(Boolean) : ["8x10 in", "12x16 in", "16x20 in"];
+
     const descEl = document.getElementById('pDesc');
     const desc = descEl ? descEl.value.trim() : '';
 
@@ -966,7 +988,7 @@ async function saveProductForm(e, existingSlug) {
 
     const productData = {
       slug, name, category: cat, shortDesc: desc, description: desc, material,
-      sizes: ["8x10 in","12x16 in","16x20 in"], colors: ["Gold"], images: imageSrcs,
+      sizes, colors: ["Gold"], images: imageSrcs,
       price: isNaN(price) ? 0 : price, offerPrice: isNaN(offerPrice) ? null : offerPrice, stock, rating: 5.0, reviews: 1, featured
     };
 
@@ -1025,7 +1047,8 @@ function renderAdminCategories() {
               <div class="flex-1 min-w-0">
                 <h3 class="font-display text-lg font-bold text-ivory-50 truncate">${escapeHTML(c.name)}</h3>
                 <p class="text-xs text-gold-300 font-semibold truncate">${escapeHTML(c.nameGu || '')}</p>
-                <p class="text-[0.7rem] text-ivory-100/50 mt-1">Slug: ${escapeHTML(c.slug)}</p>
+                <p class="text-[0.68rem] text-gold-300/80 mt-0.5 truncate">Sizes: ${escapeHTML(Array.isArray(c.sizes) ? c.sizes.join(', ') : (c.sizes || '8x10 in, 12x16 in, 16x20 in'))}</p>
+                <p class="text-[0.7rem] text-ivory-100/50 mt-0.5">Slug: ${escapeHTML(c.slug)}</p>
               </div>
             </div>
             <div class="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
@@ -1072,6 +1095,10 @@ function openCategoryModal(existingSlug = null) {
     document.body.appendChild(mc);
   }
 
+  const categorySizesText = c
+    ? (Array.isArray(c.sizes) ? c.sizes.join(', ') : (c.sizes || '8x10 in, 12x16 in, 16x20 in'))
+    : '8x10 in, 12x16 in, 16x20 in';
+
   mc.innerHTML = `
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
@@ -1088,6 +1115,10 @@ function openCategoryModal(existingSlug = null) {
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (Gujarati)</label>
             <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Default Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated)</span></label>
+            <input id="cSizes" value="${escapeHTML(categorySizesText)}" class="admin-input" placeholder="e.g. 12x18 in, 18x24 in, 24x36 in" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
@@ -1117,6 +1148,10 @@ async function saveCategoryForm(e, existingSlug) {
     const nameGuEl = document.getElementById('cNameGu');
     const nameGu = nameGuEl ? nameGuEl.value.trim() : '';
 
+    const sizesEl = document.getElementById('cSizes');
+    const sizesVal = sizesEl ? sizesEl.value.trim() : '';
+    const sizes = sizesVal ? sizesVal.split(',').map(s => s.trim()).filter(Boolean) : ["8x10 in", "12x16 in", "16x20 in"];
+
     const descEl = document.getElementById('cDesc');
     const desc = descEl ? descEl.value.trim() : '';
 
@@ -1130,7 +1165,7 @@ async function saveCategoryForm(e, existingSlug) {
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const slug = targetSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
 
-    const categoryData = { slug, name, nameGu, description: desc, cover, icon: existingCat?.icon || 'fa-box', featured: true };
+    const categoryData = { slug, name, nameGu, description: desc, sizes, cover, icon: existingCat?.icon || 'fa-box', featured: true };
 
     if (targetSlug) {
       const idx = STORE.categories.findIndex(x => x.slug === targetSlug);
