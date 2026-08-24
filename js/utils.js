@@ -103,3 +103,55 @@ function safeMediaUrl(u) {
     return u;
   }
 }
+
+/**
+ * Reads and compresses any uploaded image file to web-ready JPEG Data URL.
+ */
+function compressImage(file, maxW = 800, maxH = 800, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    if (!file) { reject(new Error('No file provided')); return; }
+    if (typeof file === 'string') { resolve(file); return; }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW || h > maxH) {
+          if (w > h) {
+            h = Math.round((h * maxW) / w);
+            w = maxW;
+          } else {
+            w = Math.round((w * maxH) / h);
+            h = maxH;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.escapeHTML = escapeHTML;
+  window.hashPassword = hashPassword;
+  window.waLink = waLink;
+  window.productMessage = productMessage;
+  window.formatPrice = formatPrice;
+  window.discount = discount;
+  window.showToast = showToast;
+  window.safeMediaUrl = safeMediaUrl;
+  window.compressImage = compressImage;
+}
