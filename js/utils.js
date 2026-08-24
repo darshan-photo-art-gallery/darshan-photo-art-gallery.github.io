@@ -94,7 +94,7 @@ function showToast(msg, duration = 1800) {
  * Normalizes media URL relative to root / GitHub Pages path.
  */
 function safeMediaUrl(u) {
-  if (!u) return '';
+  if (!u) return 'images/products/1.jpeg';
   u = String(u).trim();
   if (/^(data:|blob:|https?:)/i.test(u)) return u;
   try {
@@ -105,12 +105,47 @@ function safeMediaUrl(u) {
 }
 
 /**
- * Reads and compresses any uploaded image file to web-ready JPEG Data URL.
+ * Helper to check WebP canvas encoding support in client browser.
  */
-function compressImage(file, maxW = 800, maxH = 800, quality = 0.7) {
+let _webpCanvasSupported = null;
+function isWebpCanvasSupported() {
+  if (_webpCanvasSupported !== null) return _webpCanvasSupported;
+  try {
+    const c = document.createElement('canvas');
+    if (c.getContext && c.getContext('2d')) {
+      _webpCanvasSupported = c.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    } else {
+      _webpCanvasSupported = false;
+    }
+  } catch (e) {
+    _webpCanvasSupported = false;
+  }
+  return _webpCanvasSupported;
+}
+
+/**
+ * Reads, validates, and optimizes uploaded image files to WebP / JPEG format.
+ * Target: Max 2000px longest side, 85% WebP quality / 88% JPEG quality.
+ * Preserves original aspect ratio and prevents double-compression.
+ */
+function compressImage(file, maxW = 2000, maxH = 2000, quality = 0.85) {
   return new Promise((resolve, reject) => {
     if (!file) { reject(new Error('No file provided')); return; }
-    if (typeof file === 'string') { resolve(file); return; }
+
+    // If already a Data URL or URL string
+    if (typeof file === 'string') {
+      resolve(file);
+      return;
+    }
+
+    // File size validation (safety limit 50MB)
+    if (file.size && file.size > 50 * 1024 * 1024) {
+      reject(new Error('Image file is too large (max 50MB). Please select a smaller file.'));
+      return;
+    }
+
+    const isPNG = file.type === 'image/png';
+    const isWebPFile = file.type === 'image/webp';
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -118,6 +153,14 @@ function compressImage(file, maxW = 800, maxH = 800, quality = 0.7) {
       img.onload = () => {
         let w = img.width;
         let h = img.height;
+
+        // Skip re-compression if image is under max dimensions and already WebP or light PNG
+        if (w <= maxW && h <= maxH && (isWebPFile || (isPNG && file.size < 600 * 1024))) {
+          resolve(e.target.result);
+          return;
+        }
+
+        // Calculate proportional dimensions (preserve exact aspect ratio)
         if (w > maxW || h > maxH) {
           if (w > h) {
             h = Math.round((h * maxW) / w);
@@ -127,19 +170,48 @@ function compressImage(file, maxW = 800, maxH = 800, quality = 0.7) {
             h = maxH;
           }
         }
+
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, w, h);
+
+        // High quality bicubic image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        let targetMime = 'image/jpeg';
+        let targetQuality = Math.max(quality, 0.85);
+
+        if (isWebpCanvasSupported()) {
+          targetMime = 'image/webp';
+          targetQuality = 0.85; // 85% WebP quality per specification
+        } else if (isPNG) {
+          targetMime = 'image/png';
+        } else {
+          targetMime = 'image/jpeg';
+          targetQuality = 0.88; // 88% JPEG fallback quality per specification
+        }
+
+        // Fill background white only for JPEG output to prevent black transparent areas
+        if (targetMime === 'image/jpeg') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, w, h);
+        }
+
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+
+        try {
+          const res = canvas.toDataURL(targetMime, targetQuality);
+          resolve(res);
+        } catch (err) {
+          resolve(e.target.result);
+        }
       };
-      img.onerror = () => resolve(e.target.result);
+      img.onerror = () => reject(new Error('Invalid or corrupted image file.'));
       img.src = e.target.result;
     };
-    reader.onerror = (err) => reject(err);
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
     reader.readAsDataURL(file);
   });
 }
@@ -153,5 +225,6 @@ if (typeof window !== 'undefined') {
   window.discount = discount;
   window.showToast = showToast;
   window.safeMediaUrl = safeMediaUrl;
+  window.isWebpCanvasSupported = isWebpCanvasSupported;
   window.compressImage = compressImage;
 }

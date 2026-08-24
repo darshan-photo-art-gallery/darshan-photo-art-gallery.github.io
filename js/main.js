@@ -901,7 +901,7 @@ async function processProductPhotos(indexes = null) {
     if (!item || !item.file) continue;
     item.status = 'working'; item.error = null; renderPhotoQueue();
     try {
-      item.data = await compressImage(item.file, 600, 600, 0.65);
+      item.data = await compressImage(item.file, 2000, 2000, 0.85);
       item.status = 'done';
     } catch (err) {
       item.status = 'error';
@@ -1160,7 +1160,7 @@ async function saveCategoryForm(e, existingSlug) {
     const targetSlug = (existingSlug && existingSlug !== 'null' && existingSlug !== 'undefined' && existingSlug !== '') ? existingSlug : null;
     const existingCat = targetSlug ? STORE.categories.find(x => x.slug === targetSlug) : null;
     let cover = existingCat ? existingCat.cover : 'images/products/3.jpeg';
-    if (file) cover = await compressImage(file, 600, 600, 0.65);
+    if (file) cover = await compressImage(file, 2000, 2000, 0.85);
 
     const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const slug = targetSlug || (cleanSlug.length > 0 ? cleanSlug : ('cat-' + Date.now()));
@@ -1293,7 +1293,7 @@ async function saveOfferForm(e, existingIdx) {
     const hasIdx = (existingIdx !== null && existingIdx !== undefined && existingIdx !== 'null');
     const existingOffer = hasIdx ? STORE.offers[existingIdx] : null;
     let image = existingOffer ? existingOffer.image : 'images/products/16.jpeg';
-    if (file) image = await compressImage(file, 600, 600, 0.65);
+    if (file) image = await compressImage(file, 2000, 2000, 0.85);
 
     const offerData = { id: existingOffer ? existingOffer.id : ('off-' + Date.now()), title, badge, description: desc, image };
 
@@ -1390,7 +1390,7 @@ async function saveGalleryForm(e) {
   const file = document.getElementById('gFile')?.files?.[0];
   if (!title || !file) return;
 
-  const image = await compressImage(file, 600, 600, 0.65);
+  const image = await compressImage(file, 2000, 2000, 0.85);
   STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
   saveStore('gallery');
   closeModal();

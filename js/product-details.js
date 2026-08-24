@@ -7,7 +7,7 @@ let currentProductImgIndex = 0;
 function selectProductThumb(imgSrc, idx) {
   currentProductImgIndex = idx;
   const main = document.getElementById('prodMainImg');
-  if (main) main.src = imgSrc;
+  if (main) main.src = safeMediaUrl(imgSrc);
   document.querySelectorAll('.prod-thumb-btn').forEach((btn, i) => {
     if (i === idx) {
       btn.className = 'prod-thumb-btn relative flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-2xl glass-panel p-1 transition-all duration-300 border-2 border-gold-400 scale-105 shadow-[0_0_15px_rgba(212,168,51,0.5)]';
@@ -66,11 +66,13 @@ function renderProductCard(p, i = 0) {
   const hasPrice = p.price && Number(p.price) > 0;
   const d = hasPrice ? discount(p.price, p.offerPrice) : 0;
   const imgUrl = (p.images && p.images[0]) ? p.images[0] : 'images/products/1.jpeg';
+  const isAboveFold = i < 4;
+
   return `
     <div class="product-card group relative overflow-hidden rounded-3xl glass-panel transition-all duration-500 hover:-translate-y-2 reveal reveal-d${(i%4)+1}">
       <div class="relative aspect-[4/5] overflow-hidden bg-noir-800 rounded-t-3xl">
         <a href="#/product/${escapeHTML(p.slug)}">
-          <img src="${escapeHTML(safeMediaUrl(imgUrl))}" alt="${escapeHTML(p.name)}" width="400" height="500" loading="lazy" class="product-img w-full h-full object-cover" onerror="this.onerror=null;this.style.opacity='0.3'" />
+          <img src="${escapeHTML(safeMediaUrl(imgUrl))}" alt="${escapeHTML(p.name)}" width="400" height="500" ${isAboveFold ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"'} decoding="async" class="product-img w-full h-full object-cover" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='images/products/1.jpeg';}" />
         </a>
         ${d > 0 ? `<span class="absolute left-3 top-3 rounded-full bg-gold-metallic px-3 py-1 text-[0.65rem] font-bold text-noir-950 shadow-lg">-${d}% OFF</span>` : ''}
         <div class="absolute right-3 top-3 flex flex-col gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
