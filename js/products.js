@@ -210,15 +210,6 @@ function initFirebaseSync() {
           const timeSinceWrite = Date.now() - Math.max(localWriteAt[k] || 0, lastLocalWrite);
 
           if (val && Array.isArray(val) && val.length > 0) {
-            // If local admin modified store recently (within 24 hours), sync local to cloud instead of overwriting
-            if (timeSinceWrite < 86400000 && STORE[k] && STORE[k].length > 0) {
-              const localStr = JSON.stringify(STORE[k]);
-              const cloudStr = JSON.stringify(val);
-              if (localStr !== cloudStr) {
-                db.ref('dpag_store/' + k).set(STORE[k]).catch(err => console.error('Cloud update error:', err));
-              }
-              return;
-            }
             const incoming = JSON.stringify(val);
             const current = JSON.stringify(STORE[k]);
             if (incoming === current) return;
