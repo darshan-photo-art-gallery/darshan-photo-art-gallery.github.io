@@ -61,28 +61,37 @@ function initCounters() {
 
 // Scroll Handler (Navbar blur, scroll progress, back-to-top toggle)
 function initScrollListeners() {
+  let ticking = false;
   window.addEventListener('scroll', () => {
-    const nav = document.getElementById('navbar');
-    if (nav) {
-      if (window.scrollY > 30) {
-        nav.classList.add('bg-noir-950/90', 'backdrop-blur-2xl', 'shadow-2xl', 'py-2.5');
-      } else {
-        nav.classList.remove('bg-noir-950/90', 'backdrop-blur-2xl', 'shadow-2xl', 'py-2.5');
-      }
-    }
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const nav = document.getElementById('navbar');
+        if (nav) {
+          if (window.scrollY > 30) {
+            nav.classList.add('bg-noir-950/95', 'shadow-2xl', 'py-2.5');
+            nav.classList.remove('py-3');
+          } else {
+            nav.classList.remove('bg-noir-950/95', 'shadow-2xl', 'py-2.5');
+            nav.classList.add('py-3');
+          }
+        }
 
-    const scrollProgress = document.getElementById('scrollProgress');
-    if (scrollProgress) {
-      const pct = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100;
-      scrollProgress.style.width = pct + '%';
-    }
+        const scrollProgress = document.getElementById('scrollProgress');
+        if (scrollProgress) {
+          const pct = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100;
+          scrollProgress.style.width = pct + '%';
+        }
 
-    const btt = document.getElementById('backToTop');
-    if (btt) {
-      if (window.scrollY > 400) btt.style.display = 'flex';
-      else btt.style.display = 'none';
+        const btt = document.getElementById('backToTop');
+        if (btt) {
+          if (window.scrollY > 400) btt.style.display = 'flex';
+          else btt.style.display = 'none';
+        }
+        ticking = false;
+      });
+      ticking = true;
     }
-  });
+  }, { passive: true });
 
   const bttBtn = document.getElementById('backToTop');
   if (bttBtn) {

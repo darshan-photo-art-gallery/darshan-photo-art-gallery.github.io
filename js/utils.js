@@ -125,10 +125,10 @@ function isWebpCanvasSupported() {
 
 /**
  * Reads, validates, and optimizes uploaded image files to WebP / JPEG format.
- * Target: Max 2000px longest side, 85% WebP quality / 88% JPEG quality.
+ * Target: Max 1000px longest side, 65% WebP quality / 68% JPEG quality for better mobile performance and database capacity.
  * Preserves original aspect ratio and prevents double-compression.
  */
-function compressImage(file, maxW = 2000, maxH = 2000, quality = 0.85) {
+function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65) {
   return new Promise((resolve, reject) => {
     if (!file) { reject(new Error('No file provided')); return; }
 

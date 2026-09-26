@@ -901,7 +901,7 @@ async function processProductPhotos(indexes = null) {
     if (!item || !item.file) continue;
     item.status = 'working'; item.error = null; renderPhotoQueue();
     try {
-      item.data = await compressImage(item.file, 2000, 2000, 0.85);
+      item.data = await compressImage(item.file, 800, 800, 0.6);
       item.status = 'done';
     } catch (err) {
       item.status = 'error';
