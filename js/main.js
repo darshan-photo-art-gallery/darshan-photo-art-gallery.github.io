@@ -1707,7 +1707,7 @@ function renderMediaLightbox() {
   const isVideo = item.type === 'video' || /\.(mp4|webm|mov)$/i.test(item.url || '');
 
   mc.innerHTML = `
-    <div id="mediaLightbox" onclick="if(event.target===this) closeMediaLightbox()" class="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-2xl p-4 sm:p-6 text-white select-none">
+    <div id="mediaLightbox" onclick="if(event.target===this) closeMediaLightbox()" class="fixed inset-0 z-[99999] flex flex-col justify-between bg-white/95 backdrop-blur-2xl text-black p-4 sm:p-6 text-white select-none">
       <div class="flex items-center justify-between z-10 py-2 gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <span class="rounded-full bg-gold-400/20 px-3 py-1 text-xs font-bold text-gold-300 border border-gold-400/40 whitespace-nowrap">
