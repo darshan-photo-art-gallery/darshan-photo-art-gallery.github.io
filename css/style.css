@@ -62,8 +62,6 @@ body {
 /* Glassmorphism Panels */
 .glass-panel {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--color-ivory-200);
   box-shadow: 0 10px 30px rgba(90, 64, 48, 0.05);
 }
@@ -74,8 +72,6 @@ body {
 
 .glass-panel-light {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-ivory-200);
 }
 
@@ -258,9 +254,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(250, 247, 242, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(250, 247, 242, 0.95);
   padding: 1rem;
 }
 
