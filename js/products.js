@@ -38,7 +38,7 @@ const I18N = {
     about: "About",
     contact: "Contact",
     whatsappUs: "WhatsApp Us",
-    heroHeadline: `Your Vision, <span class="text-gradient-gold">Our Art.</span>`
+    heroHeadline: `Your Vision, <span class="text-[#5A4030]">Our Art.</span>`
   },
   gu: {
     home: "હોમ",
@@ -48,7 +48,7 @@ const I18N = {
     about: "અમારા વિશે",
     contact: "સંપર્ક",
     whatsappUs: "વોટ્સએપ કરો",
-    heroHeadline: `તમારી કલ્પના, <span class="text-gradient-gold">અમારી કળા.</span>`
+    heroHeadline: `તમારી કલ્પના, <span class="text-[#5A4030]">અમારી કળા.</span>`
   },
 };
 

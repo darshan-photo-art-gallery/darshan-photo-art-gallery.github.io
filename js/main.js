@@ -33,32 +33,34 @@ function renderHome() {
   <!-- HERO SECTION -->
   <section class="relative flex min-h-[92vh] items-center overflow-hidden -mt-[76px]">
     <div class="absolute inset-0 z-0">
-      <img src="images/banners/hero1.jpg" alt="Hero Background" width="1920" height="1080" fetchpriority="high" decoding="async" class="w-full h-full object-cover opacity-35 scale-105" />
-      <div class="absolute inset-0 bg-gradient-to-b from-noir-950/80 via-noir-950/60 to-noir-950"></div>
-      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-500/15 via-transparent to-transparent"></div>
+      <img src="images/banners/hero1.jpg" alt="Hero Background" width="1920" height="1080" fetchpriority="high" decoding="async" class="w-full h-full object-cover scale-105" />
     </div>
 
     <div class="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-20 lg:px-10 w-full text-center">
-      <span class="section-eyebrow">Est. ${SITE.founded} · DEESA, GUJARAT</span>
-      <h1 class="mt-6 font-display text-4xl leading-[1.08] text-ivory-50 sm:text-6xl md:text-7xl font-extrabold max-w-4xl mx-auto">
-        ${I18N[currentLang].heroHeadline}
-      </h1>
-      <p class="mt-6 max-w-2xl mx-auto text-base text-ivory-100/70 sm:text-lg leading-relaxed">
-       ફોટો ફ્રેમિંગ, મંદિર ડેકોર અને સ્મૃતિ ચિન્હો માટે વિશ્વસનીયસ નામ-દર્શન ફોટો આર્ટ ગેલેરી
-      </p>
+      <div class="pointer-events-none absolute left-1/2 top-1/2 h-[160%] w-[150%] sm:w-[120%] -translate-x-1/2 -translate-y-1/2 opacity-95" style="background: radial-gradient(circle, rgba(250, 247, 242, 0.95) 0%, rgba(250, 247, 242, 0.7) 35%, transparent 65%);"></div>
       
-      <div class="hero-btns">
-        <a href="#/catalog" class="btn-luxury">Explore Catalog <i class="fa-solid fa-arrow-right text-xs"></i></a>
-        <a href="tel:919723202162" class="btn-call-luxury" aria-label="કોલ કરો">
-          <i class="fa-solid fa-phone text-sm"></i>
-          <span class="font-gujarati">કોલ કરો</span>
-        </a>
-        <a href="https://wa.me/919723202162?text=Namaste%20%F0%9F%99%8F%20Darshan%20Photo%20Art%20Gallery,%20I'd%20like%20to%20know%20more%20about%20your%20frame%20collection." target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-[#25D366]/60 text-white hover:bg-[#25D366] hover:border-[#25D366]">
-          <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
-        </a>
-        <a href="${SITE.social.instagram}" target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-pink-500/50 text-pink-300 hover:bg-pink-500/20 hover:border-pink-400" style="grid-column:1/-1">
-          <i class="fa-brands fa-instagram text-sm"></i> Follow Us on Instagram
-        </a>
+      <div class="relative z-10 max-w-5xl mx-auto">
+        <span class="inline-block bg-gold-200 text-noir-950 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm shadow-md tracking-wider">Est. ${SITE.founded} · DEESA, GUJARAT</span>
+        <h1 class="mt-6 font-display text-4xl leading-[1.08] text-ivory-50 sm:text-6xl md:text-7xl font-extrabold max-w-4xl mx-auto" >
+          ${I18N[currentLang].heroHeadline}
+        </h1>
+        <p class="mt-6 max-w-2xl mx-auto text-base text-ivory-100 font-extrabold sm:text-lg leading-relaxed">
+         ફોટો ફ્રેમિંગ, મંદિર ડેકોર અને સ્મૃતિ ચિન્હો માટે વિશ્વસનીયસ નામ-દર્શન ફોટો આર્ટ ગેલેરી
+        </p>
+        
+        <div class="hero-btns mt-10">
+          <a href="#/catalog" class="btn-luxury drop-shadow-xl">Explore Catalog <i class="fa-solid fa-arrow-right text-xs"></i></a>
+          <a href="tel:919723202162" class="btn-call-luxury drop-shadow-xl" aria-label="કોલ કરો">
+            <i class="fa-solid fa-phone text-sm"></i>
+            <span class="font-gujarati">કોલ કરો</span>
+          </a>
+          <a href="https://wa.me/919723202162?text=Namaste%20%F0%9F%99%8F%20Darshan%20Photo%20Art%20Gallery,%20I'd%20like%20to%20know%20more%20about%20your%20frame%20collection." target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-[#25D366] text-[#25D366] font-bold hover:bg-[#25D366] hover:text-white drop-shadow-lg bg-white/50 backdrop-blur-md">
+            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+          </a>
+          <a href="${SITE.social.instagram}" target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-pink-500 text-pink-500 font-bold hover:bg-pink-500 hover:text-white drop-shadow-lg bg-white/50 backdrop-blur-md" style="grid-column:1/-1">
+            <i class="fa-brands fa-instagram text-sm"></i> Follow Us on Instagram
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -68,10 +70,10 @@ function renderHome() {
     <div class="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 md:grid-cols-4">
       ${SITE.stats.map((s, i) => `
         <div class="text-center reveal reveal-d${i+1}">
-          <p class="font-display text-3xl font-bold text-gradient-gold sm:text-4xl tabular-nums">
+          <p class="font-display text-3xl font-black text-gold-400 sm:text-4xl tabular-nums drop-shadow-sm">
             <span class="counter" data-value="${s.value}">0</span>${s.suffix}
           </p>
-          <p class="mt-2 text-xs uppercase tracking-[0.2em] text-ivory-100/60 font-medium">${currentLang === 'gu' ? s.labelGu : s.label}</p>
+          <p class="mt-2 text-xs uppercase tracking-[0.2em] text-ivory-50 font-extrabold">${currentLang === 'gu' ? s.labelGu : s.label}</p>
         </div>
       `).join('')}
     </div>
@@ -89,8 +91,8 @@ function renderHome() {
           <img src="${escapeHTML(c.cover)}" alt="${escapeHTML(c.name)}" width="400" height="320" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           <div class="absolute inset-0 bg-gradient-to-t from-noir-950 via-noir-950/40 to-transparent"></div>
           <div class="absolute inset-x-0 bottom-0 p-6">
-            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-gold-300 font-semibold">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
-            <h3 class="mt-2 font-display text-2xl text-ivory-50 font-bold transition group-hover:text-gold-300">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
+            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-gold-400 font-extrabold">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
+            <h3 class="mt-2 font-display text-2xl text-ivory-50 font-black transition group-hover:text-gold-300">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
             <p class="mt-2 line-clamp-2 text-xs text-ivory-100/60 leading-relaxed">${escapeHTML(c.description)}</p>
           </div>
         </a>
@@ -127,7 +129,7 @@ function renderCatalog(categorySlug) {
         <div class="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-gold-400/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div class="max-w-2xl">
-            <div class="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.25em] text-gold-300 font-semibold">
+            <div class="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.25em] text-gold-400 font-extrabold">
               <span class="inline-block h-2 w-2 rounded-full bg-gold-400 animate-pulse"></span>
               <span>Catalog Collection</span>
             </div>
@@ -168,7 +170,7 @@ function renderCatalog(categorySlug) {
         <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
           ${allProducts.filter(p => p.category === categorySlug).length > 0 
             ? allProducts.filter(p => p.category === categorySlug).map((p, i) => renderProductCard(p, i)).join('') 
-            : `<div class="col-span-full py-16 text-center text-ivory-100/60 glass-panel rounded-3xl"><i class="fa-solid fa-box-open text-4xl text-gold-300/40 mb-3 block"></i><p class="text-base font-semibold text-ivory-100">No products available in this category.</p><a href="#/catalog" class="btn-luxury mt-4 text-xs">View All Products</a></div>`}
+            : `<div class="col-span-full py-16 text-center text-ivory-100/60 glass-panel rounded-3xl"><i class="fa-solid fa-box-open text-4xl text-gold-300/40 mb-3 block"></i><p class="text-base font-semibold text-ivory-100">No products available in this category.</p><a href="#/catalog" class="btn-luxury mt-4 text-sm font-bold">View All Products</a></div>`}
         </div>
       ` : `
         <!-- ALL CATEGORIES PARTITIONED VIEW -->
@@ -180,7 +182,7 @@ function renderCatalog(categorySlug) {
               <section class="relative border-t border-gold-400/20 pt-8">
                 <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
                   <div>
-                    <div class="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.25em] text-gold-300 font-semibold">
+                    <div class="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.25em] text-gold-400 font-extrabold">
                       <span class="inline-block h-1.5 w-1.5 rounded-full bg-gold-400"></span>
                       <span>${catProds.length} ${catProds.length === 1 ? 'Product' : 'Products'}</span>
                     </div>
@@ -240,7 +242,7 @@ function renderProduct(slug) {
           
           <div class="mt-6 flex items-center gap-4">
             ${hasPrice ? `
-              <span class="font-display text-3xl font-bold text-gradient-gold">${formatPrice(p.offerPrice || p.price)}</span>
+              <span class="font-display text-3xl font-bold text-[#5A4030]">${formatPrice(p.offerPrice || p.price)}</span>
               ${p.offerPrice ? `<span class="text-lg text-ivory-100/40 line-through">${formatPrice(p.price)}</span><span class="rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950">${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
             ` : `
               <div class="inline-flex items-center gap-2.5 rounded-2xl bg-gold-400/10 border border-gold-400/35 px-5 py-3 text-sm font-semibold text-gold-300 shadow-lg">
@@ -318,7 +320,7 @@ function renderGallery() {
                   <span class="absolute top-3 left-3 rounded-full bg-rose-600 px-2.5 py-0.5 text-[0.65rem] font-bold text-white shadow-md">🎬 VIDEO</span>
                 ` : `
                   <div class="absolute inset-0 bg-gradient-to-t from-noir-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                    <span class="text-xs text-gold-300 font-semibold"><i class="fa-solid fa-expand mr-1"></i> ફુલ સ્ક્રીન જુઓ</span>
+                    <span class="text-xs text-gold-400 font-extrabold"><i class="fa-solid fa-expand mr-1"></i> ફુલ સ્ક્રીન જુઓ</span>
                   </div>
                 `}
               </div>
@@ -459,13 +461,13 @@ function renderAdminLogin() {
   return `
     <div class="flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
       <form onsubmit="adminLogin(event)" class="glass-panel w-full max-w-md rounded-3xl p-8 shadow-2xl">
-        <h1 class="font-display text-3xl font-bold text-gradient-gold text-center">Admin Access</h1>
+        <h1 class="font-display text-3xl font-bold text-[#5A4030] text-center">Admin Access</h1>
         <p class="text-xs text-ivory-100/60 mt-1 text-center">Enter administrator credentials to log in.</p>
         
-        <label class="mt-6 block text-xs uppercase tracking-wider text-gold-300 font-semibold">Username</label>
+        <label class="mt-6 block text-xs uppercase tracking-wider text-gold-400 font-extrabold">Username</label>
         <input id="aUser" required autocomplete="username" placeholder="Username" class="admin-input mt-2" />
         
-        <label class="mt-4 block text-xs uppercase tracking-wider text-gold-300 font-semibold">Password</label>
+        <label class="mt-4 block text-xs uppercase tracking-wider text-gold-400 font-extrabold">Password</label>
         <input id="aPass" type="password" required autocomplete="current-password" placeholder="••••••••" class="admin-input mt-2" />
         
         <button class="btn-luxury mt-6 w-full justify-center">Sign In</button>
@@ -616,7 +618,7 @@ function renderAdminProducts() {
                 <div class="flex items-center gap-3">
                   <img src="${escapeHTML(c.cover)}" class="h-10 w-10 rounded-xl object-cover border border-gold-400/30" />
                   <div>
-                    <h3 class="font-display text-xl font-bold text-ivory-50">${escapeHTML(c.name)} <span class="text-xs text-gold-300 font-semibold">${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</span></h3>
+                    <h3 class="font-display text-xl font-bold text-ivory-50">${escapeHTML(c.name)} <span class="text-xs text-gold-400 font-extrabold">${c.nameGu ? `(${escapeHTML(c.nameGu)})` : ''}</span></h3>
                     <p class="text-xs text-ivory-100/60">${catProds.length} ${catProds.length === 1 ? 'Product' : 'Products'} in this category</p>
                   </div>
                 </div>
@@ -628,7 +630,7 @@ function renderAdminProducts() {
               ${catProds.length > 0 ? `
                 <div class="overflow-x-auto rounded-xl">
                   <table class="w-full text-left text-sm">
-                    <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
+                    <thead class="border-b border-white/10 text-xs uppercase text-gold-400 font-extrabold bg-white/5">
                       <tr>
                         <th class="p-3">Image &amp; Details</th>
                         <th class="p-3">Category</th>
@@ -662,7 +664,7 @@ function renderAdminProducts() {
             </div>
             <div class="overflow-x-auto rounded-xl">
               <table class="w-full text-left text-sm">
-                <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold bg-white/5">
+                <thead class="border-b border-white/10 text-xs uppercase text-gold-400 font-extrabold bg-white/5">
                   <tr>
                     <th class="p-3">Image &amp; Details</th>
                     <th class="p-3">Category</th>
@@ -730,18 +732,18 @@ function openProductModal(editSlug = null, defaultCategory = null) {
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">${p ? 'Edit Product' : 'Add New Product'}</h3>
+          <h3 class="font-display text-2xl font-bold text-[#5A4030]">${p ? 'Edit Product' : 'Add New Product'}</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
         <form onsubmit="saveProductForm(event, ${p ? `'${escapeHTML(p.slug)}'` : 'null'})" class="mt-6 space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Name</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Product Name</label>
             <input id="pName" required value="${p ? escapeHTML(p.name) : ''}" class="admin-input" placeholder="e.g. Royal Gold Mataji Frame" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category</label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Category</label>
               <select id="pCat" class="admin-input">
                 ${availableCats.map(c => {
                   const isSelected = (activeCatSlug && (activeCatSlug === c.slug || activeCatSlug === c.name || activeCatSlug.toLowerCase() === c.slug.toLowerCase()));
@@ -750,39 +752,39 @@ function openProductModal(editSlug = null, defaultCategory = null) {
               </select>
             </div>
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Stock Quantity</label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Stock Quantity</label>
               <input id="pStock" type="number" value="${p ? p.stock || 50 : 50}" class="admin-input" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Regular Price (₹) <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Leave 0 for Price on Request)</span></label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Regular Price (₹) <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Leave 0 for Price on Request)</span></label>
               <input id="pPrice" type="number" value="${p && p.price ? p.price : ''}" class="admin-input" placeholder="0 or 3499" />
             </div>
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Price (₹)</label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Offer Price (₹)</label>
               <input id="pOfferPrice" type="number" value="${p && p.offerPrice ? p.offerPrice : ''}" class="admin-input" placeholder="2499" />
             </div>
           </div>
 
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Material Details</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Material Details</label>
             <input id="pMaterial" value="${p ? escapeHTML(p.material || '') : ''}" class="admin-input" placeholder="e.g. 24K Gold Polish Teakwood" />
           </div>
 
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated, e.g. 8x10 in, 12x16 in, 16x20 in)</span></label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated, e.g. 8x10 in, 12x16 in, 16x20 in)</span></label>
             <input id="pSizes" value="${escapeHTML(productSizesText)}" class="admin-input" placeholder="e.g. 8x10 in, 12x16 in, 16x20 in, 20x24 in, Custom Size" />
           </div>
 
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Description</label>
             <textarea id="pDesc" rows="3" class="admin-input">${p ? escapeHTML(p.description || p.shortDesc || '') : ''}</textarea>
           </div>
 
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Product Photos (Max 8)</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Product Photos (Max 8)</label>
 
             <div id="pDropZone"
                  ondragover="event.preventDefault(); this.classList.add('ring-2','ring-gold-400')"
@@ -1046,7 +1048,7 @@ function renderAdminCategories() {
               <img src="${escapeHTML(c.cover)}" class="h-16 w-16 rounded-xl object-cover border border-gold-400/30 shrink-0" />
               <div class="flex-1 min-w-0">
                 <h3 class="font-display text-lg font-bold text-ivory-50 truncate">${escapeHTML(c.name)}</h3>
-                <p class="text-xs text-gold-300 font-semibold truncate">${escapeHTML(c.nameGu || '')}</p>
+                <p class="text-xs text-gold-400 font-extrabold truncate">${escapeHTML(c.nameGu || '')}</p>
                 <p class="text-[0.68rem] text-gold-300/80 mt-0.5 truncate">Sizes: ${escapeHTML(Array.isArray(c.sizes) ? c.sizes.join(', ') : (c.sizes || '8x10 in, 12x16 in, 16x20 in'))}</p>
                 <p class="text-[0.7rem] text-ivory-100/50 mt-0.5">Slug: ${escapeHTML(c.slug)}</p>
               </div>
@@ -1103,29 +1105,29 @@ function openCategoryModal(existingSlug = null) {
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">${c ? 'Edit Category' : 'Add Category'}</h3>
+          <h3 class="font-display text-2xl font-bold text-[#5A4030]">${c ? 'Edit Category' : 'Add Category'}</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
         <form onsubmit="saveCategoryForm(event, ${existingSlug ? `'${escapeHTML(existingSlug)}'` : 'null'})" class="mt-6 space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (English)</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Category Name (English)</label>
             <input id="cName" required value="${c ? escapeHTML(c.name) : ''}" class="admin-input" placeholder="e.g. Mataji Paat (Bajot)" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Category Name (Gujarati)</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Category Name (Gujarati)</label>
             <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Default Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated)</span></label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Default Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated)</span></label>
             <input id="cSizes" value="${escapeHTML(categorySizesText)}" class="admin-input" placeholder="e.g. 12x18 in, 18x24 in, 24x36 in" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Description</label>
             <textarea id="cDesc" rows="2" class="admin-input">${c ? escapeHTML(c.description || '') : ''}</textarea>
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Cover Image</label>
             <input id="cCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
@@ -1250,25 +1252,25 @@ function openOfferModal(existingIdx = null) {
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">${o ? 'Edit Offer' : 'Add Offer'}</h3>
+          <h3 class="font-display text-2xl font-bold text-[#5A4030]">${o ? 'Edit Offer' : 'Add Offer'}</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
         <form onsubmit="saveOfferForm(event, ${existingIdx !== null && existingIdx !== undefined ? existingIdx : 'null'})" class="mt-6 space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Offer Title</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Offer Title</label>
             <input id="oTitle" required value="${o ? escapeHTML(o.title) : ''}" class="admin-input" placeholder="e.g. Diwali Divine Offer" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Badge Tag</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Badge Tag</label>
             <input id="oBadge" value="${o ? escapeHTML(o.badge) : ''}" class="admin-input" placeholder="FESTIVAL SPECIAL" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Description</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Description</label>
             <textarea id="oDesc" rows="2" class="admin-input">${o ? escapeHTML(o.description) : ''}</textarea>
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Cover Image</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Cover Image</label>
             <input id="oCoverFile" type="file" accept="image/*" class="admin-input text-xs" />
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
@@ -1361,17 +1363,17 @@ function openGalleryModal() {
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-gradient-gold">Upload Gallery Photo</h3>
+          <h3 class="font-display text-2xl font-bold text-[#5A4030]">Upload Gallery Photo</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
         <form onsubmit="saveGalleryForm(event)" class="mt-6 space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Photo Title</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Photo Title</label>
             <input id="gTitle" required class="admin-input" placeholder="e.g. Gold Temple Arch Installation" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Select Photo File</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Select Photo File</label>
             <input id="gFile" type="file" accept="image/*" required class="admin-input text-xs" />
           </div>
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
@@ -1447,7 +1449,7 @@ function renderAdminSubscribers() {
 
       <div class="overflow-x-auto rounded-2xl glass-panel p-2">
         <table class="w-full text-left text-sm">
-          <thead class="border-b border-white/10 text-xs uppercase text-gold-300 font-semibold">
+          <thead class="border-b border-white/10 text-xs uppercase text-gold-400 font-extrabold">
             <tr>
               <th class="p-3">#</th>
               <th class="p-3">Customer Email Address</th>
@@ -1505,22 +1507,22 @@ function renderAdminSecurity() {
             <i class="fa-solid fa-key text-lg"></i>
           </div>
           <div>
-            <h2 class="font-display text-2xl font-bold text-gradient-gold">Admin Security Settings</h2>
+            <h2 class="font-display text-2xl font-bold text-[#5A4030]">Admin Security Settings</h2>
             <p class="text-xs text-ivory-100/60">Change your password and manage authentication security.</p>
           </div>
         </div>
 
         <form onsubmit="changeAdminPassword(event)" class="space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Current Password</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Current Password</label>
             <input id="currPass" type="password" required class="admin-input" placeholder="••••••••" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">New Password</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">New Password</label>
             <input id="newPass" type="password" required minlength="6" class="admin-input" placeholder="••••••••" />
           </div>
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-300 font-semibold mb-1">Confirm New Password</label>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Confirm New Password</label>
             <input id="confirmPass" type="password" required minlength="6" class="admin-input" placeholder="••••••••" />
           </div>
           <button type="submit" class="btn-luxury w-full justify-center mt-6">

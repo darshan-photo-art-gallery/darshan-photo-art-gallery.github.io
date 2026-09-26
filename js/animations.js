@@ -68,11 +68,11 @@ function initScrollListeners() {
         const nav = document.getElementById('navbar');
         if (nav) {
           if (window.scrollY > 30) {
-            nav.classList.add('bg-noir-950/95', 'shadow-2xl', 'py-2.5');
-            nav.classList.remove('py-3');
+            nav.classList.add('shadow-xl');
+            nav.classList.remove('shadow-md');
           } else {
-            nav.classList.remove('bg-noir-950/95', 'shadow-2xl', 'py-2.5');
-            nav.classList.add('py-3');
+            nav.classList.remove('shadow-xl');
+            nav.classList.add('shadow-md');
           }
         }
 
