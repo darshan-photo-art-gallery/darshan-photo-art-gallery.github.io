@@ -123,7 +123,7 @@ function renderCatalog(categorySlug) {
 
   return `
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
-      <div class="glass-panel relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-gold-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
+      <div class="glass-panel relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-gold-400/30 shadow-[0_20px_50px_rgba(90,64,48,0.1)]">
         <div class="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-gold-400/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div class="max-w-2xl">
@@ -219,7 +219,7 @@ function renderProduct(slug) {
     <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-10">
       <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
         <div class="flex flex-col gap-4">
-          <div class="relative group aspect-square sm:aspect-[4/5] w-full overflow-hidden rounded-3xl glass-panel p-2 flex items-center justify-center bg-noir-900 border border-gold-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+          <div class="relative group aspect-square sm:aspect-[4/5] w-full overflow-hidden rounded-3xl glass-panel p-2 flex items-center justify-center bg-noir-900 border border-gold-400/30 shadow-[0_20px_50px_rgba(90,64,48,0.1)]">
             <img id="prodMainImg" src="${escapeHTML(images[0])}" alt="${escapeHTML(p.name)}" width="600" height="600" fetchpriority="high" class="h-full w-full object-contain rounded-2xl cursor-pointer transition-transform duration-500 group-hover:scale-[1.03]" onerror="this.onerror=null;this.style.opacity='0.35'" onclick="openMediaLightbox(this.src, 'image', '${escapeHTML(p.name)}', ${JSON.stringify(images).replace(/"/g, '&quot;')}, currentProductImgIndex)" />
             ${hasPrice && discount(p.price, p.offerPrice) > 0 ? `<span class="absolute left-4 top-4 rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950 shadow-lg">-${discount(p.price, p.offerPrice)}% OFF</span>` : ''}
           </div>
@@ -1729,9 +1729,9 @@ function renderMediaLightbox() {
         ` : ''}
 
         ${isVideo ? `
-          <video src="${escapeHTML(url)}" controls autoplay playsinline loop class="max-h-[78vh] max-w-[92vw] object-contain rounded-2xl shadow-[0_0_50px_rgba(212,168,51,0.25)] border border-gold-400/30"></video>
+          <video src="${escapeHTML(url)}" controls autoplay playsinline loop class="max-h-[78vh] max-w-[92vw] object-contain rounded-2xl shadow-[0_0_50px_rgba(184,148,82,0.15)] border border-gold-400/30"></video>
         ` : `
-          <img src="${escapeHTML(url)}" alt="${escapeHTML(item.title || 'Preview')}" class="max-h-[78vh] max-w-[92vw] w-auto h-auto object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-white/10" />
+          <img src="${escapeHTML(url)}" alt="${escapeHTML(item.title || 'Preview')}" class="max-h-[78vh] max-w-[92vw] w-auto h-auto object-contain rounded-2xl shadow-[0_0_50px_rgba(90,64,48,0.2)] border border-white/10" />
         `}
       </div>
 
