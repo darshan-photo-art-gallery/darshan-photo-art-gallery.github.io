@@ -1,5 +1,5 @@
 /* ============================================================
-   DARSHAN PHOTO ART GALLERY — PRODUCTS & STORE SYSTEM (products.js)
+   DARSHAN PHOTO ART GALLERY â€” PRODUCTS & STORE SYSTEM (products.js)
    ============================================================ */
 
 const SITE = {
@@ -9,7 +9,7 @@ const SITE = {
   phoneRaw: "919723202162",
   whatsapp: "919723202162",
   email: "jigarbhati1234@gmail.com",
-  address: "05, પહેલો માળ વિમલ પારસ-2 કોમ્પલેક્ષ નવા બસ સ્ટેશનની સામે ઠાકોર સમાજ લાઈબ્રેરી ની નીચે , ડીસા, તા. ડીસા, જી. બનાસકાંઠા, ગુજરાત, પીનકોડ- 38 55 35",
+  address: "05, \u0a8b\u0ab7\u0aad \u0a95\u0acb\u0aae\u0acd\u0aaa\u0ab2\u0ac7\u0a95\u0acd\u0ab7 \u0aac\u0acd\u0ab2\u0acb\u0a95-2 \u0a9c\u0ab2\u0abe\u0ab0\u0abe\u0aae\u0aa8\u0abe \u0aae\u0a82\u0aa6\u0abf\u0ab0 \u0aa8\u0ac0 \u0aaa\u0abe\u0a9b\u0ab3 \u0a9c\u0ac1\u0aa8\u0abe \u0a97\u0abe\u0aaf\u0aa4\u0acd\u0ab0\u0ac0 \u0aae\u0a82\u0aa6\u0abf\u0ab0 \u0aa8\u0ac0 \u0ab8\u0abe\u0aae\u0ac7 , \u0aa1\u0ac0\u0ab8\u0abe, \u0aa4\u0abe. \u0aa1\u0ac0\u0ab8\u0abe, \u0a9c\u0ac0. \u0aac\u0aa8\u0abe\u0ab8\u0a95\u0abe\u0a82\u0aa0\u0abe, \u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4, \u0aad\u0abe\u0ab0\u0aa4- 38 55 35",
   founded: 1995,
   social: {
     instagram: "https://instagram.com/jigar_bhati_21_62",
@@ -18,10 +18,10 @@ const SITE = {
     pinterest: "https://pinterest.com/darshanphotoartgallery",
   },
   stats: [
-    { label: "Years of Legacy", labelGu: "વર્ષોનો વારસો", value: 30, suffix: "+" },
-    { label: "Happy Families", labelGu: "ખુશ પરિવારો", value: 25000, suffix: "+" },
-    { label: "Frames Crafted", labelGu: "ફ્રેમ બનાવેલ", value: 120000, suffix: "+" },
-    { label: "Google Rating", labelGu: "ગૂગલ રેટિંગ", value: 4.9, suffix: "/5" },
+    { label: "Years of Legacy", labelGu: "\u0ab5\u0ab0\u0acd\u0ab7\u0acb\u0aa8\u0acb \u0ab5\u0abe\u0ab0\u0ab8\u0acb", value: 30, suffix: "+" },
+    { label: "Happy Families", labelGu: "\u0a96\u0ac1\u0ab6 \u0aaa\u0ab0\u0abf\u0ab5\u0abe\u0ab0\u0acb", value: 25000, suffix: "+" },
+    { label: "Frames Crafted", labelGu: "\u0aac\u0aa8\u0abe\u0ab5\u0ac7\u0ab2\u0ac0 \u0aab\u0acd\u0ab0\u0ac7\u0aae\u0acd\u0ab8", value: 120000, suffix: "+" },
+    { label: "Google Rating", labelGu: "\u0a97\u0ac2\u0a97\u0ab2 \u0ab0\u0ac7\u0a9f\u0abf\u0a82\u0a97", value: 4.9, suffix: "/5" },
   ],
   hours: [
     { day: "Monday - Saturday", time: "10:00 AM - 5:00 PM" },
@@ -38,17 +38,17 @@ const I18N = {
     about: "About",
     contact: "Contact",
     whatsappUs: "WhatsApp Us",
-    heroHeadline: `<span class="font-gujarati text-black font-black">????? ???? ???? ??????</span>`
+    heroHeadline: `<span class="font-gujarati text-black font-black">\u0aa6\u0ab0\u0acd\u0ab6\u0aa8 \u0aab\u0acb\u0a9f\u0acb \u0a86\u0ab0\u0acd\u0a9f \u0a97\u0ac7\u0ab2\u0ac7\u0ab0\u0ac0</span>`
   },
   gu: {
-    home: "હોમ",
-    catalog: "કેટલોગ",
-    gallery: "ગેલેરી",
-    offers: "ઓફર્સ",
-    about: "અમારા વિશે",
-    contact: "સંપર્ક",
-    whatsappUs: "વોટ્સએપ કરો",
-    heroHeadline: `<span class="font-gujarati text-black font-black">????? ???? ???? ??????</span>`
+    home: "\u0ab9\u0acb\u0aae",
+    catalog: "\u0a95\u0ac7\u0a9f\u0ac7\u0ab2\u0acb\u0a97",
+    gallery: "\u0a97\u0ac7\u0ab2\u0ac7\u0ab0\u0ac0",
+    offers: "\u0a91\u0aab\u0ab0\u0acd\u0ab8",
+    about: "\u0a85\u0aae\u0abe\u0ab0\u0abe \u0ab5\u0abf\u0ab6\u0ac7",
+    contact: "\u0ab8\u0a82\u0aaa\u0ab0\u0acd\u0a95",
+    whatsappUs: "\u0ab5\u0acb\u0a9f\u0acd\u0ab8\u0a8f\u0aaa \u0a95\u0ab0\u0acb",
+    heroHeadline: `<span class="font-gujarati text-black font-black">\u0aa6\u0ab0\u0acd\u0ab6\u0aa8 \u0aab\u0acb\u0a9f\u0acb \u0a86\u0ab0\u0acd\u0a9f \u0a97\u0ac7\u0ab2\u0ac7\u0ab0\u0ac0</span>`
   },
 };
 
@@ -143,7 +143,7 @@ function saveStore(key) {
           .catch(err => {
             console.error('Cloud sync error:', err);
             if (typeof showToast === 'function') {
-              showToast('⚠️ Cloud Write Error: ' + (err.message || 'Permission Denied'));
+              showToast('âš ï¸ Cloud Write Error: ' + (err.message || 'Permission Denied'));
             }
           });
       }
