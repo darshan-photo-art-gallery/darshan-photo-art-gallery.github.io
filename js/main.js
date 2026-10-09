@@ -1873,10 +1873,12 @@ if (typeof window !== 'undefined') {
   // Global Initialization
   window.addEventListener('hashchange', render);
   window.addEventListener('DOMContentLoaded', async () => {
+    // 1. Immediately kick off Firebase sync so cloud data streams in instantly
+    if (typeof initFirebaseSync === 'function') initFirebaseSync();
+    // 2. Load and merge local data
     await loadDataStoreFromJSON();
     populateFooter();
     updateBadges();
-    if (typeof initFirebaseSync === 'function') initFirebaseSync();
     if (typeof initCustomCursor === 'function') initCustomCursor();
     if (typeof initScrollListeners === 'function') initScrollListeners();
     render();

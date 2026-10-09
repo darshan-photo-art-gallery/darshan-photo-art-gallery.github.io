@@ -81,18 +81,25 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
-    const mergeData = (localData, fetchedData) => {
-      if (!localData || !localData.length) return fetchedData;
-      const localSlugs = new Set(localData.map(x => x.slug || x.id));
-      const missing = fetchedData.filter(x => !localSlugs.has(x.slug || x.id));
-      return [...localData, ...missing];
+    const mergeData = (primaryData, secondaryData) => {
+      if (!primaryData || !primaryData.length) return secondaryData || [];
+      if (!secondaryData || !secondaryData.length) return primaryData || [];
+      const seen = new Set(primaryData.map(x => x.slug || x.id));
+      const missing = secondaryData.filter(x => !seen.has(x.slug || x.id));
+      return [...primaryData, ...missing];
     };
 
     const resCat = await fetch('data/categories.json');
-    if (resCat.ok) STORE.categories = mergeData(STORE.categories, await resCat.json());
+    if (resCat.ok) {
+      const fetchedCats = await resCat.json();
+      STORE.categories = mergeData(STORE.categories, fetchedCats);
+    }
 
     const resProd = await fetch('data/products.json');
-    if (resProd.ok) STORE.products = mergeData(STORE.products, await resProd.json());
+    if (resProd.ok) {
+      const fetchedProds = await resProd.json();
+      STORE.products = mergeData(STORE.products, fetchedProds);
+    }
 
     const resOff = await fetch('data/offers.json');
     if (resOff.ok) STORE.offers = mergeData(STORE.offers, await resOff.json());
@@ -210,16 +217,13 @@ function initFirebaseSync() {
           isFirebaseConnected = true;
           updateFirebaseBadgeUI(true);
 
-          const lastLocalWrite = (typeof localStorage !== 'undefined' && Number(localStorage.getItem('dpag_last_write_' + k))) || 0;
-          const timeSinceWrite = Date.now() - Math.max(localWriteAt[k] || 0, lastLocalWrite);
-
           if (val && Array.isArray(val) && val.length > 0) {
-            const incoming = JSON.stringify(val);
-            const current = JSON.stringify(STORE[k]);
-            if (incoming === current) return;
+            // Priority: Cloud database is the single source of truth
             STORE[k] = val;
             try {
-              if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_' + k, incoming);
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('dpag_' + k, JSON.stringify(val));
+              }
             } catch (e) {}
             if (typeof render === 'function') render();
           } else if (STORE[k] && Array.isArray(STORE[k]) && STORE[k].length > 0) {
