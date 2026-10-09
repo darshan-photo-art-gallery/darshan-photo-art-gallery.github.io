@@ -922,7 +922,7 @@ async function processProductPhotos(indexes = null) {
     if (!item || !item.file) continue;
     item.status = 'working'; item.error = null; renderPhotoQueue();
     try {
-      item.data = await compressImage(item.file, 800, 800, 0.6);
+      item.data = await compressImage(item.file, 1000, 1000, 0.82);
       item.status = 'done';
     } catch (err) {
       item.status = 'error';
