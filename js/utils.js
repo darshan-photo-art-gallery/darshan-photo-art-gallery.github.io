@@ -94,9 +94,13 @@ function showToast(msg, duration = 1800) {
  * Normalizes media URL relative to root / GitHub Pages path.
  */
 function safeMediaUrl(u) {
-  if (!u) return 'images/products/1.jpeg';
+  if (!u) return 'images/products/1.webp';
   u = String(u).trim();
   if (/^(data:|blob:|https?:)/i.test(u)) return u;
+  // Automatically prefer optimized .webp version if referencing static local assets
+  if (/\.(jpeg|jpg|png)$/i.test(u) && !u.includes('placeholder')) {
+    u = u.replace(/\.(jpeg|jpg|png)$/i, '.webp');
+  }
   try {
     return u.split('/').map(part => encodeURIComponent(decodeURIComponent(part))).join('/');
   } catch (e) {

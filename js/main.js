@@ -33,7 +33,11 @@ function renderHome() {
   <!-- HERO SECTION -->
   <section class="relative flex min-h-[92vh] items-center overflow-hidden -mt-[76px]">
     <div class="absolute inset-0 z-0">
-      <img src="images/banners/hero1.jpg" alt="Hero Background" width="1920" height="1080" fetchpriority="high" decoding="async" class="w-full h-full object-cover scale-105" />
+      <picture>
+        <source media="(max-width: 768px)" srcset="images/banners/hero1-mobile.webp" type="image/webp" />
+        <source srcset="images/banners/hero1.webp" type="image/webp" />
+        <img src="images/banners/hero1.jpg" alt="Handcrafted Religious Frames and Temple Decor" width="1376" height="768" fetchpriority="high" decoding="async" class="w-full h-full object-cover scale-105" />
+      </picture>
     </div>
 
     <div class="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-20 lg:px-10 w-full text-center">

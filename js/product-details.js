@@ -76,10 +76,10 @@ function renderProductCard(p, i = 0) {
         </a>
         ${d > 0 ? `<span class="absolute left-3 top-3 rounded-full bg-gold-metallic px-3 py-1 text-[0.65rem] font-bold text-noir-950 shadow-lg">-${d}% OFF</span>` : ''}
         <div class="absolute right-3 top-3 flex flex-col gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <button onclick="event.preventDefault();toggleWishlist(STORE.products.find(x=>x.slug==='${escapeHTML(p.slug)}'))" class="flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition ${isWishlisted(p.slug) ? 'bg-gold-400 text-noir-950' : 'bg-noir-950/70 text-ivory-100 hover:bg-gold-400 hover:text-noir-950'}">
+          <button onclick="event.preventDefault();toggleWishlist(STORE.products.find(x=>x.slug==='${escapeHTML(p.slug)}'))" aria-label="Add to Wishlist" class="flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition ${isWishlisted(p.slug) ? 'bg-gold-400 text-noir-950' : 'bg-noir-950/70 text-ivory-100 hover:bg-gold-400 hover:text-noir-950'}">
             <i class="fa-solid fa-heart text-[13px]"></i>
           </button>
-          <a href="${waLink(productMessage(p.name))}" target="_blank" rel="noopener noreferrer" class="flex h-9 w-9 items-center justify-center rounded-full bg-noir-950/70 text-ivory-100 backdrop-blur-md transition hover:bg-[#25D366] hover:text-white">
+          <a href="${waLink(productMessage(p.name))}" target="_blank" rel="noopener noreferrer" aria-label="Inquire on WhatsApp" class="flex h-9 w-9 items-center justify-center rounded-full bg-noir-950/70 text-ivory-100 backdrop-blur-md transition hover:bg-[#25D366] hover:text-white">
             <i class="fa-brands fa-whatsapp text-[14px]"></i>
           </a>
         </div>
