@@ -81,35 +81,40 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
-    // Merge helper: Local/cached data takes precedence, but fills missing from bundled JSON
-    const mergeData = (primaryData, secondaryData) => {
-      const p = Array.isArray(primaryData) ? primaryData : [];
-      const s = Array.isArray(secondaryData) ? secondaryData : [];
-      if (!p.length) return s;
-      if (!s.length) return p;
-      const seen = new Set(p.map(x => (x.slug || x.id || '').toLowerCase().trim()));
-      const missing = s.filter(x => !seen.has((x.slug || x.id || '').toLowerCase().trim()));
-      return [...p, ...missing];
+    // Check if user has active local store or deleted items tracking
+    const deletedSlugs = safeGetStorage('dpag_deleted_slugs', []);
+    const filterDeleted = (items) => {
+      if (!Array.isArray(items)) return [];
+      if (!deletedSlugs.length) return items;
+      const delSet = new Set(deletedSlugs.map(s => String(s).toLowerCase().trim()));
+      return items.filter(x => !delSet.has(String(x.slug || x.id || '').toLowerCase().trim()));
     };
 
-    const resCat = await fetch('data/categories.json');
-    if (resCat.ok) {
-      const fetchedCats = await resCat.json();
-      STORE.categories = mergeData(STORE.categories, fetchedCats);
+    // If STORE.products already has data (from localStorage or Firebase), only fill if completely empty
+    if (!STORE.products || !STORE.products.length) {
+      const resProd = await fetch('data/products.json');
+      if (resProd.ok) {
+        const fetchedProds = await resProd.json();
+        STORE.products = filterDeleted(fetchedProds);
+      }
+    } else {
+      STORE.products = filterDeleted(STORE.products);
     }
 
-    const resProd = await fetch('data/products.json');
-    if (resProd.ok) {
-      const fetchedProds = await resProd.json();
-      // If STORE.products already has user-added products (like in localStorage), do not overwrite them!
-      STORE.products = mergeData(STORE.products, fetchedProds);
+    if (!STORE.categories || !STORE.categories.length) {
+      const resCat = await fetch('data/categories.json');
+      if (resCat.ok) STORE.categories = await resCat.json();
     }
 
-    const resOff = await fetch('data/offers.json');
-    if (resOff.ok) STORE.offers = mergeData(STORE.offers, await resOff.json());
+    if (!STORE.offers || !STORE.offers.length) {
+      const resOff = await fetch('data/offers.json');
+      if (resOff.ok) STORE.offers = await resOff.json();
+    }
 
-    const resGal = await fetch('data/gallery.json');
-    if (resGal.ok) STORE.gallery = mergeData(STORE.gallery, await resGal.json());
+    if (!STORE.gallery || !STORE.gallery.length) {
+      const resGal = await fetch('data/gallery.json');
+      if (resGal.ok) STORE.gallery = await resGal.json();
+    }
   } catch (err) {
     console.warn('JSON Fetch Notice:', err);
   }

@@ -1016,7 +1016,15 @@ async function saveProductForm(e, existingSlug) {
     if (targetSlug) {
       const idx = STORE.products.findIndex(x => x.slug === targetSlug);
       if (idx >= 0) STORE.products[idx] = productData;
-      else STORE.products.unshift(productData);
+      else // Ensure clean state in deleted tracking
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const delList = safeGetStorage('dpag_deleted_slugs', []);
+        const filteredDel = delList.filter(s => s !== String(slug).toLowerCase().trim());
+        localStorage.setItem('dpag_deleted_slugs', JSON.stringify(filteredDel));
+      }
+    } catch(e) {}
+    STORE.products.unshift(productData);
     } else {
       STORE.products.unshift(productData);
     }
@@ -1039,9 +1047,24 @@ async function saveProductForm(e, existingSlug) {
 function deleteProduct(slug) {
   if (!slug) return;
   if (confirm('Are you sure you want to delete this product?')) {
-    STORE.products = (STORE.products || []).filter(x => x.slug !== slug);
+    const cleanSlug = String(slug).toLowerCase().trim();
+    // 1. Remove from in-memory array
+    STORE.products = (STORE.products || []).filter(x => String(x.slug).toLowerCase().trim() !== cleanSlug);
+    
+    // 2. Track in permanent deleted list so bundled JSON never resurrects it
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const delList = safeGetStorage('dpag_deleted_slugs', []);
+        if (!delList.includes(cleanSlug)) {
+          delList.push(cleanSlug);
+          localStorage.setItem('dpag_deleted_slugs', JSON.stringify(delList));
+        }
+      }
+    } catch(e) {}
+
+    // 3. Save to localStorage and Firebase Realtime Database
     saveStore('products');
-    showToast('\u201c Product deleted');
+    showToast('Product deleted permanently');
     render();
   }
 }
