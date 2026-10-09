@@ -81,7 +81,7 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
-    // Deterministic merge preserving unique slugs with stable ordering
+    // Merge helper: Local/cached data takes precedence, but fills missing from bundled JSON
     const mergeData = (primaryData, secondaryData) => {
       const p = Array.isArray(primaryData) ? primaryData : [];
       const s = Array.isArray(secondaryData) ? secondaryData : [];
@@ -101,6 +101,7 @@ async function loadDataStoreFromJSON() {
     const resProd = await fetch('data/products.json');
     if (resProd.ok) {
       const fetchedProds = await resProd.json();
+      // If STORE.products already has user-added products (like in localStorage), do not overwrite them!
       STORE.products = mergeData(STORE.products, fetchedProds);
     }
 
