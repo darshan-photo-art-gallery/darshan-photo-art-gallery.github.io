@@ -129,6 +129,14 @@ function renderCatalog(categorySlug) {
 
   return `
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
+      ${categorySlug ? `
+        <div class="mb-4">
+          <button onclick="handleNavigationBack('#/catalog')" class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-gold-400/30 text-xs font-bold text-gold-300 hover:bg-gold-400/10 hover:border-gold-300 transition shadow-sm" aria-label="Go Back to All Categories">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+            <span>Back to All Categories</span>
+          </button>
+        </div>
+      ` : ''}
       <div class="glass-panel relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-gold-400/30 shadow-[0_20px_50px_rgba(90,64,48,0.1)]">
         <div class="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-gold-400/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -163,7 +171,7 @@ function renderCatalog(categorySlug) {
 
             <div class="inline-flex items-center gap-1.5 rounded-2xl bg-gold-400/10 border border-gold-400/35 px-4 py-2.5 text-xs font-extrabold text-gold-300 shadow-md whitespace-nowrap">
               <i class="fa-solid fa-box-archive text-[11px]"></i>
-              <span>${categorySlug ? allProducts.filter(p => p.category === categorySlug).length : totalCount} Items</span>
+              <span>${categorySlug ? allProducts.filter(p => (p.category || '').toLowerCase().trim() === (categorySlug || '').toLowerCase().trim()).length : totalCount} Items</span>
             </div>
           </div>
         </div>
@@ -172,8 +180,8 @@ function renderCatalog(categorySlug) {
       ${categorySlug ? `
         <!-- SINGLE CATEGORY VIEW -->
         <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-          ${allProducts.filter(p => p.category === categorySlug).length > 0 
-            ? allProducts.filter(p => p.category === categorySlug).map((p, i) => renderProductCard(p, i)).join('') 
+          ${allProducts.filter(p => (p.category || '').toLowerCase().trim() === (categorySlug || '').toLowerCase().trim()).length > 0 
+            ? allProducts.filter(p => (p.category || '').toLowerCase().trim() === (categorySlug || '').toLowerCase().trim()).map((p, i) => renderProductCard(p, i)).join('') 
             : `<div class="col-span-full py-16 text-center text-ivory-100/60 glass-panel rounded-3xl"><i class="fa-solid fa-box-open text-4xl text-gold-300/40 mb-3 block"></i><p class="text-base font-semibold text-ivory-100">No products available in this category.</p><a href="#/catalog" class="btn-luxury mt-4 text-sm font-bold">View All Products</a></div>`}
         </div>
       ` : `
@@ -222,7 +230,14 @@ function renderProduct(slug) {
   const formattedSizes = (Array.isArray(p.sizes) ? p.sizes : (p.sizes ? [p.sizes] : ["8x10 in", "12x16 in", "16x20 in"])).map(s => escapeHTML(s)).join(', ');
 
   return `
-    <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-10">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
+      <div class="mb-6 flex items-center justify-between">
+        <button onclick="handleNavigationBack('#/catalog/${escapeHTML(p.category || "")}')" class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-gold-400/30 text-xs font-bold text-gold-300 hover:bg-gold-400/10 hover:border-gold-300 transition shadow-sm" aria-label="Go Back">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          <span>Back to ${escapeHTML(getCategoryLabel(p.category))}</span>
+        </button>
+        <a href="#/catalog" class="text-xs text-ivory-100/60 hover:text-gold-300 transition">View All Products &rarr;</a>
+      </div>
       <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
         <div class="flex flex-col gap-4">
           <div class="relative group aspect-square sm:aspect-[4/5] w-full overflow-hidden rounded-3xl glass-panel p-2 flex items-center justify-center bg-noir-900 border border-gold-400/30 shadow-[0_20px_50px_rgba(90,64,48,0.1)]">
@@ -253,7 +268,7 @@ function renderProduct(slug) {
                 <i class="fa-brands fa-whatsapp text-emerald-400 text-xl"></i>
                 <div>
                   <p class="font-bold text-gold-200">Price on Request</p>
-                  <p class="text-[0.7rem] text-ivory-100/60 font-gujarati">\u00aa\u2022\u0abf\u00aa\u201a\u0aae\u0aa4 \u0aae\u0abe\u00aa\u0178\u00ab\u2021 \u0ab5\u00ab\u2039\u00aa\u0178\u0acd\u0ab8\u0a8f\u0aaa \u0aaa\u0ab0 \u0ab8\u00aa\u201a\u0aaa\u0ab0\u0acd\u00aa\u2022 \u00aa\u2022\u0ab0\u00ab\u2039</p>
+                  <p class="text-[0.7rem] text-ivory-100/60 font-gujarati">Contact on WhatsApp for Price</p>
                 </div>
               </div>
             `}
@@ -1990,3 +2005,12 @@ if (typeof window !== 'undefined') {
     }
   });
 }
+
+function handleNavigationBack(fallbackHash) {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.hash = fallbackHash || '#/catalog';
+  }
+}
+window.handleNavigationBack = handleNavigationBack;

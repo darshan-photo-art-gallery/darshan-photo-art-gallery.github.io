@@ -98,3 +98,18 @@ function initScrollListeners() {
     bttBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   }
 }
+
+// Smooth Back to top handler
+document.addEventListener('DOMContentLoaded', () => {
+  const btt = document.getElementById('backToTop');
+  if (btt) {
+    btt.addEventListener('click', (e) => {
+      e.preventDefault();
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth'
+      });
+    });
+  }
+});

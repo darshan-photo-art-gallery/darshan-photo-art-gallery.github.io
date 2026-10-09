@@ -81,12 +81,15 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
+    // Deterministic merge preserving unique slugs with stable ordering
     const mergeData = (primaryData, secondaryData) => {
-      if (!primaryData || !primaryData.length) return secondaryData || [];
-      if (!secondaryData || !secondaryData.length) return primaryData || [];
-      const seen = new Set(primaryData.map(x => x.slug || x.id));
-      const missing = secondaryData.filter(x => !seen.has(x.slug || x.id));
-      return [...primaryData, ...missing];
+      const p = Array.isArray(primaryData) ? primaryData : [];
+      const s = Array.isArray(secondaryData) ? secondaryData : [];
+      if (!p.length) return s;
+      if (!s.length) return p;
+      const seen = new Set(p.map(x => (x.slug || x.id || '').toLowerCase().trim()));
+      const missing = s.filter(x => !seen.has((x.slug || x.id || '').toLowerCase().trim()));
+      return [...p, ...missing];
     };
 
     const resCat = await fetch('data/categories.json');
