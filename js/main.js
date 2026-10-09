@@ -85,15 +85,15 @@ function renderHome() {
       <span class="section-eyebrow">Handcrafted Mastery</span>
       <h2 class="mt-4 font-display text-3xl font-bold text-ivory-50 sm:text-5xl">Signature Collections</h2>
     </div>
-    <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-14 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
       ${featuredCats.map((c, i) => `
-        <a href="#/catalog/${c.slug}" class="group relative block h-80 overflow-hidden rounded-3xl border border-white/10 glass-panel reveal-scale reveal-d${(i%3)+1}">
+        <a href="#/catalog/${c.slug}" class="group relative block h-48 sm:h-80 overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 glass-panel reveal-scale reveal-d${(i%3)+1}">
           <img src="${escapeHTML(c.cover)}" alt="${escapeHTML(c.name)}" width="400" height="320" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           <div class="absolute inset-0 bg-gradient-to-t from-noir-950 via-noir-950/40 to-transparent"></div>
-          <div class="absolute inset-x-0 bottom-0 p-6">
-            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-gold-400 font-extrabold">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
-            <h3 class="mt-2 font-display text-2xl text-ivory-50 font-black transition group-hover:text-gold-300">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
-            <p class="mt-2 line-clamp-2 text-xs text-ivory-100/60 leading-relaxed">${escapeHTML(c.description)}</p>
+          <div class="absolute inset-x-0 bottom-0 p-3 sm:p-6">
+            <p class="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gold-400 font-extrabold">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
+            <h3 class="mt-1 sm:mt-2 font-display text-base sm:text-2xl text-ivory-50 font-black transition group-hover:text-gold-300">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
+            <p class="mt-1 sm:mt-2 line-clamp-2 text-[0.65rem] sm:text-xs text-ivory-100/60 leading-relaxed hidden sm:block">${escapeHTML(c.description)}</p>
           </div>
         </a>
       `).join('')}
