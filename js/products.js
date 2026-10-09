@@ -1,5 +1,5 @@
 /* ============================================================
-   DARSHAN PHOTO ART GALLERY â€” PRODUCTS & STORE SYSTEM (products.js)
+   DARSHAN PHOTO ART GALLERY \u00e2\u20ac\u201d PRODUCTS & STORE SYSTEM (products.js)
    ============================================================ */
 
 const SITE = {
@@ -143,7 +143,7 @@ function saveStore(key) {
           .catch(err => {
             console.error('Cloud sync error:', err);
             if (typeof showToast === 'function') {
-              showToast('âš ï¸ Cloud Write Error: ' + (err.message || 'Permission Denied'));
+              showToast('\u00e2\u0161\u00a0\ufe0f Cloud Write Error: ' + (err.message || 'Permission Denied'));
             }
           });
       }
