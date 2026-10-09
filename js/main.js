@@ -26,7 +26,7 @@ function getCategoryLabel(catSlug) {
 // ---------------- RENDER VIEWS ----------------
 
 function renderHome() {
-  const featuredCats = (STORE.categories || []).slice(0, 6);
+  const featuredCats = (STORE.categories || []);
   const featuredProducts = (STORE.products || []).filter(p => p.featured).slice(0, 8);
 
   return `
@@ -45,7 +45,7 @@ function renderHome() {
           ${I18N[currentLang].heroHeadline}
         </h1>
         <p class="mt-6 max-w-2xl mx-auto text-base text-ivory-100 font-extrabold sm:text-lg leading-relaxed">
-         àª«à«‹àªŸà«‹ àª«à«àª°à«‡àª®àª¿àª‚àª—, àª®àª‚àª¦àª¿àª° àª¡à«‡àª•à«‹àª° àª…àª¨à«‡ àª¸à«àª®à«ƒàª¤àª¿ àªšàª¿àª¨à«àª¹à«‹ àª®àª¾àªŸà«‡ àªµàª¿àª¶à«àªµàª¸àª¨à«€àª¯àª¸ àª¨àª¾àª®-àª¦àª°à«àª¶àª¨ àª«à«‹àªŸà«‹ àª†àª°à«àªŸ àª—à«‡àª²à«‡àª°à«€
+          ${SITE.tagline}
         </p>
         
         <div class="hero-btns mt-10">
@@ -85,15 +85,15 @@ function renderHome() {
       <span class="section-eyebrow">Handcrafted Mastery</span>
       <h2 class="mt-4 font-display text-3xl font-bold text-ivory-50 sm:text-5xl">Signature Collections</h2>
     </div>
-    <div class="mt-14 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+    <div class="mt-14 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
       ${featuredCats.map((c, i) => `
-        <a href="#/catalog/${c.slug}" class="group relative block h-48 sm:h-80 overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 glass-panel reveal-scale reveal-d${(i%3)+1}">
-          <img src="${escapeHTML(c.cover)}" alt="${escapeHTML(c.name)}" width="400" height="320" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-          <div class="absolute inset-0 bg-gradient-to-t from-noir-950 via-noir-950/40 to-transparent"></div>
-          <div class="absolute inset-x-0 bottom-0 p-3 sm:p-6">
-            <p class="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gold-400 font-extrabold">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
-            <h3 class="mt-1 sm:mt-2 font-display text-base sm:text-2xl text-ivory-50 font-black transition group-hover:text-gold-300">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
-            <p class="mt-1 sm:mt-2 line-clamp-2 text-[0.65rem] sm:text-xs text-ivory-100/60 leading-relaxed hidden sm:block">${escapeHTML(c.description)}</p>
+        <a href="#/catalog/${c.slug}" class="product-card group relative block overflow-hidden rounded-3xl glass-panel transition-all duration-500 hover:-translate-y-2 reveal reveal-d${(i%4)+1}">
+          <div class="relative aspect-[4/5] overflow-hidden bg-noir-800 rounded-t-3xl">
+            <img src="${escapeHTML(c.cover)}" alt="${escapeHTML(c.name)}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          </div>
+          <div class="p-4 sm:p-5">
+            <p class="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gold-400 font-extrabold mb-1">${(STORE.products || []).filter(p => p.category === c.slug).length} Masterpieces</p>
+            <h3 class="line-clamp-2 font-display text-base font-bold text-ivory-50 transition group-hover:text-gold-300 sm:text-lg">${escapeHTML(currentLang === 'gu' ? c.nameGu || c.name : c.name)}</h3>
           </div>
         </a>
       `).join('')}
@@ -144,7 +144,7 @@ function renderCatalog(categorySlug) {
           <div class="flex items-center gap-3 self-start md:self-auto flex-wrap sm:flex-nowrap">
             <div class="relative min-w-[210px] sm:min-w-[240px]">
               <select onchange="window.location.hash = this.value ? '#/catalog/' + this.value : '#/catalog'" class="w-full appearance-none rounded-2xl border border-gold-400/40 bg-noir-950/90 px-4 py-2.5 pr-10 text-xs font-bold uppercase tracking-wider text-gold-200 outline-none transition-all duration-300 hover:border-gold-300 hover:bg-noir-900 focus:border-gold-300 focus:ring-1 focus:ring-gold-400/50 cursor-pointer shadow-lg">
-                <option value="" ${!categorySlug ? 'selected' : ''}>âœ¨ All Categories (${totalCount})</option>
+                <option value="" ${!categorySlug ? 'selected' : ''}>✨ All Categories (${totalCount})</option>
                 ${(STORE.categories || []).map(c => {
                   const cCount = allProducts.filter(p => p.category === c.slug).length;
                   return `<option value="${escapeHTML(c.slug)}" ${categorySlug === c.slug ? 'selected' : ''}>
@@ -301,7 +301,7 @@ function renderGallery() {
         <button onclick="setGalleryFilter('all')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'all' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">All (àª¬àª§àª¾)</button>
         <button onclick="setGalleryFilter('video')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'video' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">ðŸŽ¬ Videos (àªµàª¿àª¡àª¿àª¯à«‹)</button>
         <button onclick="setGalleryFilter('temple')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'temple' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">ðŸ–¼ï¸ Temple Art</button>
-        <button onclick="setGalleryFilter('frames')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'frames' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">âœ¨ Luxury Frames</button>
+        <button onclick="setGalleryFilter('frames')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'frames' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">✨ Luxury Frames</button>
       </div>
 
       <div class="mt-12 columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-4">
