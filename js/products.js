@@ -81,22 +81,24 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
-    if (!STORE.categories.length) {
-      const resCat = await fetch('data/categories.json');
-      if (resCat.ok) STORE.categories = await resCat.json();
-    }
-    if (!STORE.products.length) {
-      const resProd = await fetch('data/products.json');
-      if (resProd.ok) STORE.products = await resProd.json();
-    }
-    if (!STORE.offers.length) {
-      const resOff = await fetch('data/offers.json');
-      if (resOff.ok) STORE.offers = await resOff.json();
-    }
-    if (!STORE.gallery.length) {
-      const resGal = await fetch('data/gallery.json');
-      if (resGal.ok) STORE.gallery = await resGal.json();
-    }
+    const mergeData = (localData, fetchedData) => {
+      if (!localData || !localData.length) return fetchedData;
+      const localSlugs = new Set(localData.map(x => x.slug || x.id));
+      const missing = fetchedData.filter(x => !localSlugs.has(x.slug || x.id));
+      return [...localData, ...missing];
+    };
+
+    const resCat = await fetch('data/categories.json');
+    if (resCat.ok) STORE.categories = mergeData(STORE.categories, await resCat.json());
+
+    const resProd = await fetch('data/products.json');
+    if (resProd.ok) STORE.products = mergeData(STORE.products, await resProd.json());
+
+    const resOff = await fetch('data/offers.json');
+    if (resOff.ok) STORE.offers = mergeData(STORE.offers, await resOff.json());
+
+    const resGal = await fetch('data/gallery.json');
+    if (resGal.ok) STORE.gallery = mergeData(STORE.gallery, await resGal.json());
   } catch (err) {
     console.warn('JSON Fetch Notice:', err);
   }
@@ -169,12 +171,14 @@ function updateFirebaseBadgeUI(connected) {
 
 function initFirebaseSync() {
   const firebaseConfig = (typeof window !== 'undefined' && window.FIREBASE_CONFIG) || {
-    apiKey: "AIzaSyB-DarshanPhotoArtGalleryConfigKey2026",
+    apiKey: "AIzaSyCkGFVs9fCb5K5wqYXNL8lKdZ4p7_lx3jU",
     authDomain: "darshan-photo-art-gallery.firebaseapp.com",
-    databaseURL: "https://darshan-photo-art-gallery-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    databaseURL: "https://darshan-photo-art-gallery-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "darshan-photo-art-gallery",
-    storageBucket: "darshan-photo-art-gallery.appspot.com",
-    appId: "1:100000000000:web:darshanphotoartgallery2026"
+    storageBucket: "darshan-photo-art-gallery.firebasestorage.app",
+    messagingSenderId: "467407286892",
+    appId: "1:467407286892:web:392bdbf76cb7b918441e49",
+    measurementId: "G-LL8P7H0GNG"
   };
 
   if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
