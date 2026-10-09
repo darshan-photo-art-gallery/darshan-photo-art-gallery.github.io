@@ -1013,18 +1013,20 @@ async function saveProductForm(e, existingSlug) {
       price: isNaN(price) ? 0 : price, offerPrice: isNaN(offerPrice) ? null : offerPrice, stock, rating: 5.0, reviews: 1, featured
     };
 
-    if (targetSlug) {
-      const idx = STORE.products.findIndex(x => x.slug === targetSlug);
-      if (idx >= 0) STORE.products[idx] = productData;
-      else // Ensure clean state in deleted tracking
+    // Clean up from deleted tracking if this slug was previously deleted
     try {
       if (typeof localStorage !== 'undefined') {
         const delList = safeGetStorage('dpag_deleted_slugs', []);
-        const filteredDel = delList.filter(s => s !== String(slug).toLowerCase().trim());
+        const cleanSlugLower = String(slug).toLowerCase().trim();
+        const filteredDel = delList.filter(s => String(s).toLowerCase().trim() !== cleanSlugLower);
         localStorage.setItem('dpag_deleted_slugs', JSON.stringify(filteredDel));
       }
     } catch(e) {}
-    STORE.products.unshift(productData);
+
+    if (targetSlug) {
+      const idx = STORE.products.findIndex(x => x.slug === targetSlug);
+      if (idx >= 0) STORE.products[idx] = productData;
+      else STORE.products.unshift(productData);
     } else {
       STORE.products.unshift(productData);
     }

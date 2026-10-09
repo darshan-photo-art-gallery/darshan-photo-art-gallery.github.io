@@ -81,22 +81,26 @@ const STORE = {
 // Async data loader from JSON files if LocalStorage is empty
 async function loadDataStoreFromJSON() {
   try {
-    // Check if user has active local store or deleted items tracking
     const deletedSlugs = safeGetStorage('dpag_deleted_slugs', []);
+    const delSet = new Set(deletedSlugs.map(s => String(s).toLowerCase().trim()));
+
     const filterDeleted = (items) => {
       if (!Array.isArray(items)) return [];
-      if (!deletedSlugs.length) return items;
-      const delSet = new Set(deletedSlugs.map(s => String(s).toLowerCase().trim()));
+      if (!delSet.size) return items;
       return items.filter(x => !delSet.has(String(x.slug || x.id || '').toLowerCase().trim()));
     };
 
-    // If STORE.products already has data (from localStorage or Firebase), only fill if completely empty
-    if (!STORE.products || !STORE.products.length) {
-      const resProd = await fetch('data/products.json');
-      if (resProd.ok) {
-        const fetchedProds = await resProd.json();
-        STORE.products = filterDeleted(fetchedProds);
-      }
+    // Always fetch bundled fallback to ensure no catalog products are ever missing
+    const resProd = await fetch('data/products.json');
+    if (resProd.ok) {
+      const fetchedProds = await resProd.json();
+      const currentProds = Array.isArray(STORE.products) ? STORE.products : [];
+      
+      // Merge: Keep all locally saved/newly added products, and append any missing default products
+      const localSlugs = new Set(currentProds.map(x => String(x.slug || x.id || '').toLowerCase().trim()));
+      const missingFromLocal = fetchedProds.filter(x => !localSlugs.has(String(x.slug || x.id || '').toLowerCase().trim()));
+      
+      STORE.products = filterDeleted([...currentProds, ...missingFromLocal]);
     } else {
       STORE.products = filterDeleted(STORE.products);
     }
