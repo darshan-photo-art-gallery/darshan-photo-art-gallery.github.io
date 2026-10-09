@@ -312,3 +312,61 @@ img {
   
 }
 
+
+/* Floating Action Button (WhatsApp) positioning & aesthetics */
+.fab-group {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fab-whatsapp {
+  display: flex;
+  height: 52px;
+  width: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #25D366;
+  color: #FFFFFF;
+  font-size: 26px;
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fab-whatsapp:hover {
+  transform: scale(1.08);
+  box-shadow: 0 14px 28px rgba(37, 211, 102, 0.5);
+}
+
+/* Floating Back To Top button positioning */
+#backToTop {
+  position: fixed;
+  bottom: 88px; /* Perfectly positioned above WhatsApp FAB with no overlap */
+  right: 24px;
+  z-index: 49;
+  display: none;
+  height: 44px;
+  width: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgba(250, 247, 242, 0.95);
+  border: 1px solid rgba(184, 148, 82, 0.4);
+  color: #5A4030;
+  box-shadow: 0 8px 20px rgba(90, 64, 48, 0.15);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#backToTop:hover {
+  background-color: #5A4030;
+  color: #FFFFFF;
+  border-color: #5A4030;
+  transform: translateY(-3px);
+}
