@@ -1,5 +1,5 @@
 /* ============================================================
-   DARSHAN PHOTO ART GALLERY — MAIN CONTROLLER & APPLICATION (main.js)
+   DARSHAN PHOTO ART GALLERY â€” MAIN CONTROLLER & APPLICATION (main.js)
    ============================================================ */
 
 function getRoute() {
@@ -40,19 +40,19 @@ function renderHome() {
       <div class="pointer-events-none absolute left-1/2 top-1/2 h-[160%] w-[150%] sm:w-[120%] -translate-x-1/2 -translate-y-1/2 opacity-95" style="background: radial-gradient(circle, rgba(250, 247, 242, 0.95) 0%, rgba(250, 247, 242, 0.7) 35%, transparent 65%);"></div>
       
       <div class="relative z-10 max-w-5xl mx-auto">
-        <span class="inline-block bg-gold-200 text-noir-950 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm shadow-md tracking-wider">Est. ${SITE.founded} · DEESA, GUJARAT</span>
+        <span class="inline-block bg-gold-200 text-noir-950 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm shadow-md tracking-wider">Est. ${SITE.founded} Â· DEESA, GUJARAT</span>
         <h1 class="mt-6 font-display text-4xl leading-[1.08] text-ivory-50 sm:text-6xl md:text-7xl font-extrabold max-w-4xl mx-auto" >
           ${I18N[currentLang].heroHeadline}
         </h1>
         <p class="mt-6 max-w-2xl mx-auto text-base text-ivory-100 font-extrabold sm:text-lg leading-relaxed">
-         ફોટો ફ્રેમિંગ, મંદિર ડેકોર અને સ્મૃતિ ચિન્હો માટે વિશ્વસનીયસ નામ-દર્શન ફોટો આર્ટ ગેલેરી
+         àª«à«‹àªŸà«‹ àª«à«àª°à«‡àª®àª¿àª‚àª—, àª®àª‚àª¦àª¿àª° àª¡à«‡àª•à«‹àª° àª…àª¨à«‡ àª¸à«àª®à«ƒàª¤àª¿ àªšàª¿àª¨à«àª¹à«‹ àª®àª¾àªŸà«‡ àªµàª¿àª¶à«àªµàª¸àª¨à«€àª¯àª¸ àª¨àª¾àª®-àª¦àª°à«àª¶àª¨ àª«à«‹àªŸà«‹ àª†àª°à«àªŸ àª—à«‡àª²à«‡àª°à«€
         </p>
         
         <div class="hero-btns mt-10">
           <a href="#/catalog" class="btn-luxury drop-shadow-xl">Explore Catalog <i class="fa-solid fa-arrow-right text-xs"></i></a>
-          <a href="tel:919723202162" class="btn-call-luxury drop-shadow-xl" aria-label="કોલ કરો">
+          <a href="tel:919723202162" class="btn-call-luxury drop-shadow-xl" aria-label="\u0a95\u0acb\u0ab2 \u0a95\u0ab0\u0acb">
             <i class="fa-solid fa-phone text-sm"></i>
-            <span class="font-gujarati">કોલ કરો</span>
+            <span class="font-gujarati">\u0a95\u0acb\u0ab2 \u0a95\u0ab0\u0acb</span>
           </a>
           <a href="https://wa.me/919723202162?text=Namaste%20%F0%9F%99%8F%20Darshan%20Photo%20Art%20Gallery,%20I'd%20like%20to%20know%20more%20about%20your%20frame%20collection." target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-[#25D366] text-[#25D366] font-bold hover:bg-[#25D366] hover:text-white drop-shadow-lg bg-white/50 backdrop-blur-md">
             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
@@ -137,14 +137,14 @@ function renderCatalog(categorySlug) {
               ${currentCat ? escapeHTML(currentLang === 'gu' ? currentCat.nameGu || currentCat.name : currentCat.name) : 'All Crafted Products'}
             </h1>
             <p class="mt-2 text-xs sm:text-sm text-ivory-100/70 leading-relaxed font-light">
-              ${currentCat && currentCat.description ? escapeHTML(currentCat.description) : 'Explore our complete handcrafted collection of divine Mataji frames, temple décor, LED backlights & luxury photo art.'}
+              ${currentCat && currentCat.description ? escapeHTML(currentCat.description) : 'Explore our complete handcrafted collection of divine Mataji frames, temple dÃ©cor, LED backlights & luxury photo art.'}
             </p>
           </div>
 
           <div class="flex items-center gap-3 self-start md:self-auto flex-wrap sm:flex-nowrap">
             <div class="relative min-w-[210px] sm:min-w-[240px]">
               <select onchange="window.location.hash = this.value ? '#/catalog/' + this.value : '#/catalog'" class="w-full appearance-none rounded-2xl border border-gold-400/40 bg-noir-950/90 px-4 py-2.5 pr-10 text-xs font-bold uppercase tracking-wider text-gold-200 outline-none transition-all duration-300 hover:border-gold-300 hover:bg-noir-900 focus:border-gold-300 focus:ring-1 focus:ring-gold-400/50 cursor-pointer shadow-lg">
-                <option value="" ${!categorySlug ? 'selected' : ''}>✨ All Categories (${totalCount})</option>
+                <option value="" ${!categorySlug ? 'selected' : ''}>âœ¨ All Categories (${totalCount})</option>
                 ${(STORE.categories || []).map(c => {
                   const cCount = allProducts.filter(p => p.category === c.slug).length;
                   return `<option value="${escapeHTML(c.slug)}" ${categorySlug === c.slug ? 'selected' : ''}>
@@ -233,7 +233,7 @@ function renderProduct(slug) {
               </button>
             `).join('')}
           </div>
-          <p class="text-[0.7rem] text-ivory-100/50 text-center font-gujarati">💡 ફોટો બદલવા માટે થંબનેલ પર ક્લિક કરો · મોટો જોવા માટે ઇમેજ પર ટૅપ કરો</p>
+          <p class="text-[0.7rem] text-ivory-100/50 text-center font-gujarati">ðŸ’¡ àª«à«‹àªŸà«‹ àª¬àª¦àª²àªµàª¾ àª®àª¾àªŸà«‡ àª¥àª‚àª¬àª¨à«‡àª² àªªàª° àª•à«àª²àª¿àª• àª•àª°à«‹ Â· àª®à«‹àªŸà«‹ àªœà«‹àªµàª¾ àª®àª¾àªŸà«‡ àª‡àª®à«‡àªœ àªªàª° àªŸà«…àªª àª•àª°à«‹</p>
         </div>
 
         <div class="flex flex-col justify-center">
@@ -249,7 +249,7 @@ function renderProduct(slug) {
                 <i class="fa-brands fa-whatsapp text-emerald-400 text-xl"></i>
                 <div>
                   <p class="font-bold text-gold-200">Price on Request</p>
-                  <p class="text-[0.7rem] text-ivory-100/60 font-gujarati">કિંમત માટે વોટ્સએપ પર સંપર્ક કરો</p>
+                  <p class="text-[0.7rem] text-ivory-100/60 font-gujarati">àª•àª¿àª‚àª®àª¤ àª®àª¾àªŸà«‡ àªµà«‹àªŸà«àª¸àªàªª àªªàª° àª¸àª‚àªªàª°à«àª• àª•àª°à«‹</p>
                 </div>
               </div>
             `}
@@ -260,12 +260,12 @@ function renderProduct(slug) {
           <div class="mt-6 space-y-2 border-y border-white/10 py-4 text-xs text-ivory-100/70">
             <p><strong class="text-gold-300">Material:</strong> ${escapeHTML(p.material || '24K Gold Polish Teakwood')}</p>
             <p><strong class="text-gold-300">Available Sizes:</strong> ${formattedSizes}</p>
-            <p><strong class="text-gold-300">Rating:</strong> ⭐ ${p.rating || 5.0} / 5 (${p.reviews || 100}+ reviews)</p>
+            <p><strong class="text-gold-300">Rating:</strong> â­ ${p.rating || 5.0} / 5 (${p.reviews || 100}+ reviews)</p>
           </div>
 
           <div class="mt-8 flex flex-wrap gap-4">
             <a href="${waLink(productMessage(p.name))}" target="_blank" rel="noopener noreferrer" class="btn-luxury w-full justify-center !py-3.5">
-              <i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp Order (ઓર્ડર કરો)
+              <i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp Order (àª“àª°à«àª¡àª° àª•àª°à«‹)
             </a>
           </div>
         </div>
@@ -294,14 +294,14 @@ function renderGallery() {
       <div class="text-center">
         <span class="section-eyebrow">Visual Heritage</span>
         <h1 class="mt-4 font-display text-3xl font-bold text-ivory-50 sm:text-5xl">Our Gallery Showcase</h1>
-        <p class="mt-3 text-xs text-ivory-100/60 max-w-md mx-auto font-gujarati">ફોટા અને વિડિયો ફુલ સ્ક્રીનમાં જોવા માટે કાર્ડ પર ક્લિક કરો.</p>
+        <p class="mt-3 text-xs text-ivory-100/60 max-w-md mx-auto font-gujarati">àª«à«‹àªŸàª¾ àª…àª¨à«‡ àªµàª¿àª¡àª¿àª¯à«‹ àª«à«àª² àª¸à«àª•à«àª°à«€àª¨àª®àª¾àª‚ àªœà«‹àªµàª¾ àª®àª¾àªŸà«‡ àª•àª¾àª°à«àª¡ àªªàª° àª•à«àª²àª¿àª• àª•àª°à«‹.</p>
       </div>
 
       <div class="mt-8 flex flex-wrap justify-center gap-2">
-        <button onclick="setGalleryFilter('all')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'all' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">All (બધા)</button>
-        <button onclick="setGalleryFilter('video')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'video' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">🎬 Videos (વિડિયો)</button>
-        <button onclick="setGalleryFilter('temple')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'temple' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">🖼️ Temple Art</button>
-        <button onclick="setGalleryFilter('frames')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'frames' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">✨ Luxury Frames</button>
+        <button onclick="setGalleryFilter('all')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'all' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">All (àª¬àª§àª¾)</button>
+        <button onclick="setGalleryFilter('video')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'video' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">ðŸŽ¬ Videos (àªµàª¿àª¡àª¿àª¯à«‹)</button>
+        <button onclick="setGalleryFilter('temple')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'temple' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">ðŸ–¼ï¸ Temple Art</button>
+        <button onclick="setGalleryFilter('frames')" class="rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-wider transition ${currentGalleryFilter === 'frames' ? 'bg-gold-400 text-noir-950' : 'glass-panel-light text-ivory-100/70 hover:border-gold-400/50'}">âœ¨ Luxury Frames</button>
       </div>
 
       <div class="mt-12 columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-4">
@@ -317,10 +317,10 @@ function renderGallery() {
                       <i class="fa-solid fa-play text-lg ml-0.5"></i>
                     </div>
                   </div>
-                  <span class="absolute top-3 left-3 rounded-full bg-rose-600 px-2.5 py-0.5 text-[0.65rem] font-bold text-white shadow-md">🎬 VIDEO</span>
+                  <span class="absolute top-3 left-3 rounded-full bg-rose-600 px-2.5 py-0.5 text-[0.65rem] font-bold text-white shadow-md">ðŸŽ¬ VIDEO</span>
                 ` : `
                   <div class="absolute inset-0 bg-gradient-to-t from-noir-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                    <span class="text-xs text-gold-400 font-extrabold"><i class="fa-solid fa-expand mr-1"></i> ફુલ સ્ક્રીન જુઓ</span>
+                    <span class="text-xs text-gold-400 font-extrabold"><i class="fa-solid fa-expand mr-1"></i> àª«à«àª² àª¸à«àª•à«àª°à«€àª¨ àªœà«àª“</span>
                   </div>
                 `}
               </div>
@@ -352,7 +352,7 @@ function renderOffers() {
             <span class="mt-4 inline-block rounded-full bg-gold-metallic px-3 py-1 text-xs font-bold text-noir-950">${escapeHTML(o.badge)}</span>
             <h3 class="mt-2 font-display text-2xl font-bold text-gold-200">${escapeHTML(o.title)}</h3>
             <p class="mt-2 text-xs text-ivory-100/70 leading-relaxed">${escapeHTML(o.description)}</p>
-            <a href="${waLink(`Namaste 🙏 I want to claim offer: ${o.title}`)}" target="_blank" rel="noopener noreferrer" class="btn-luxury mt-6">Claim Offer</a>
+            <a href="${waLink(`Namaste ðŸ™ I want to claim offer: ${o.title}`)}" target="_blank" rel="noopener noreferrer" class="btn-luxury mt-6">Claim Offer</a>
           </div>
         `).join('')}
       </div>
@@ -468,7 +468,7 @@ function renderAdminLogin() {
         <input id="aUser" required autocomplete="username" placeholder="Username" class="admin-input mt-2" />
         
         <label class="mt-4 block text-xs uppercase tracking-wider text-gold-400 font-extrabold">Password</label>
-        <input id="aPass" type="password" required autocomplete="current-password" placeholder="••••••••" class="admin-input mt-2" />
+        <input id="aPass" type="password" required autocomplete="current-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" class="admin-input mt-2" />
         
         <button class="btn-luxury mt-6 w-full justify-center">Sign In</button>
         
@@ -759,11 +759,11 @@ function openProductModal(editSlug = null, defaultCategory = null) {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Regular Price (₹) <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Leave 0 for Price on Request)</span></label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Regular Price (â‚¹) <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Leave 0 for Price on Request)</span></label>
               <input id="pPrice" type="number" value="${p && p.price ? p.price : ''}" class="admin-input" placeholder="0 or 3499" />
             </div>
             <div>
-              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Offer Price (₹)</label>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Offer Price (â‚¹)</label>
               <input id="pOfferPrice" type="number" value="${p && p.offerPrice ? p.offerPrice : ''}" class="admin-input" placeholder="2499" />
             </div>
           </div>
@@ -830,7 +830,7 @@ function openProductModal(editSlug = null, defaultCategory = null) {
 
 function queueFiles(fileList) {
   const room = MAX_PHOTOS - PHOTO_QUEUE.length;
-  if (room <= 0) { showToast('⚠️ Max ' + MAX_PHOTOS + ' photos allowed.'); return; }
+  if (room <= 0) { showToast('âš ï¸ Max ' + MAX_PHOTOS + ' photos allowed.'); return; }
   const files = Array.from(fileList || []).filter(f => f && f.type.startsWith('image/')).slice(0, room);
   if (!files.length) return;
   PHOTO_QUEUE = PHOTO_QUEUE.concat(files.map(f => ({ file: f, name: f.name, status: 'pending', data: null, error: null, existing: false })));
@@ -869,7 +869,7 @@ function renderPhotoQueue() {
   const bar = document.getElementById('pProgressBar'); if (bar) bar.style.width = pct + '%';
   const pctText = document.getElementById('pProgressPct'); if (pctText) pctText.textContent = pct + '%';
   const txt = document.getElementById('pProgressText');
-  if (txt) txt.textContent = failed ? `${done}/${PHOTO_QUEUE.length} ready · ${failed} failed` : `${done}/${PHOTO_QUEUE.length} photos ready`;
+  if (txt) txt.textContent = failed ? `${done}/${PHOTO_QUEUE.length} ready Â· ${failed} failed` : `${done}/${PHOTO_QUEUE.length} photos ready`;
 
   const badge = {
     pending: '<i class="fa-regular fa-clock text-ivory-100/50"></i>',
@@ -919,7 +919,7 @@ function removeProductPhoto(index) {
   PHOTO_QUEUE.splice(index, 1);
   renderPhotoQueue();
   syncPhotosToSavedProduct();
-  showToast('✓ Photo removed');
+  showToast('âœ“ Photo removed');
 }
 
 function syncPhotosToSavedProduct() {
@@ -944,7 +944,7 @@ async function saveProductForm(e, existingSlug) {
   try {
     const nameEl = document.getElementById('pName');
     const name = nameEl ? nameEl.value.trim() : '';
-    if (!name) { showToast('❌ Product name is required.'); return; }
+    if (!name) { showToast('âŒ Product name is required.'); return; }
 
     const catEl = document.getElementById('pCat');
     const cat = catEl && catEl.value ? catEl.value : (STORE.categories?.[0]?.slug || 'mataji-frames');
@@ -1004,11 +1004,11 @@ async function saveProductForm(e, existingSlug) {
 
     saveStore('products');
     closeModal();
-    showToast('✓ Product saved successfully!');
+    showToast('âœ“ Product saved successfully!');
     render();
   } catch (err) {
     console.error('Save product error:', err);
-    showToast('❌ Error saving product: ' + (err && err.message ? err.message : err));
+    showToast('âŒ Error saving product: ' + (err && err.message ? err.message : err));
   } finally {
     if (submitBtn && document.body.contains(submitBtn)) {
       submitBtn.disabled = false;
@@ -1022,7 +1022,7 @@ function deleteProduct(slug) {
   if (confirm('Are you sure you want to delete this product?')) {
     STORE.products = (STORE.products || []).filter(x => x.slug !== slug);
     saveStore('products');
-    showToast('✓ Product deleted');
+    showToast('âœ“ Product deleted');
     render();
   }
 }
@@ -1084,7 +1084,7 @@ function moveCategory(index, direction) {
   STORE.categories[index] = STORE.categories[newIndex];
   STORE.categories[newIndex] = temp;
   saveStore('categories');
-  showToast('✓ Category reordered');
+  showToast('âœ“ Category reordered');
   render();
 }
 
@@ -1116,7 +1116,7 @@ function openCategoryModal(existingSlug = null) {
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Category Name (Gujarati)</label>
-            <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="દા.ત. ભુવાજી પાટ" />
+            <input id="cNameGu" value="${c ? escapeHTML(c.nameGu || '') : ''}" class="admin-input" placeholder="àª¦àª¾.àª¤. àª­à«àªµàª¾àªœà«€ àªªàª¾àªŸ" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Default Available Sizes <span class="text-[0.65rem] text-ivory-100/50 normal-case">(Comma separated)</span></label>
@@ -1145,7 +1145,7 @@ async function saveCategoryForm(e, existingSlug) {
   try {
     const nameEl = document.getElementById('cName');
     const name = nameEl ? nameEl.value.trim() : '';
-    if (!name) { showToast('❌ Category name is required.'); return; }
+    if (!name) { showToast('âŒ Category name is required.'); return; }
 
     const nameGuEl = document.getElementById('cNameGu');
     const nameGu = nameGuEl ? nameGuEl.value.trim() : '';
@@ -1179,11 +1179,11 @@ async function saveCategoryForm(e, existingSlug) {
 
     saveStore('categories');
     closeModal();
-    showToast(targetSlug ? '✓ Category updated!' : '✓ Category added!');
+    showToast(targetSlug ? 'âœ“ Category updated!' : 'âœ“ Category added!');
     render();
   } catch (err) {
     console.error('Save category error:', err);
-    showToast('❌ Error saving category.');
+    showToast('âŒ Error saving category.');
   }
 }
 
@@ -1192,7 +1192,7 @@ function deleteCategory(slug) {
   if (confirm('Delete this category? Products in this category will remain.')) {
     STORE.categories = (STORE.categories || []).filter(c => c.slug !== slug);
     saveStore('categories');
-    showToast('✓ Category deleted');
+    showToast('âœ“ Category deleted');
     render();
   }
 }
@@ -1287,7 +1287,7 @@ async function saveOfferForm(e, existingIdx) {
   e.preventDefault();
   try {
     const title = document.getElementById('oTitle')?.value.trim();
-    if (!title) { showToast('❌ Offer title is required.'); return; }
+    if (!title) { showToast('âŒ Offer title is required.'); return; }
     const badge = document.getElementById('oBadge')?.value.trim() || 'PROMO';
     const desc = document.getElementById('oDesc')?.value.trim() || '';
     const file = document.getElementById('oCoverFile')?.files?.[0];
@@ -1307,11 +1307,11 @@ async function saveOfferForm(e, existingIdx) {
 
     saveStore('offers');
     closeModal();
-    showToast(hasIdx ? '✓ Offer updated!' : '✓ Offer added!');
+    showToast(hasIdx ? 'âœ“ Offer updated!' : 'âœ“ Offer added!');
     render();
   } catch (err) {
     console.error('Save offer error:', err);
-    showToast('❌ Error saving offer.');
+    showToast('âŒ Error saving offer.');
   }
 }
 
@@ -1319,7 +1319,7 @@ function deleteOffer(idx) {
   if (confirm('Delete this offer?')) {
     STORE.offers.splice(idx, 1);
     saveStore('offers');
-    showToast('✓ Offer deleted');
+    showToast('âœ“ Offer deleted');
     render();
   }
 }
@@ -1396,7 +1396,7 @@ async function saveGalleryForm(e) {
   STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
   saveStore('gallery');
   closeModal();
-  showToast('✓ Photo uploaded to gallery');
+  showToast('âœ“ Photo uploaded to gallery');
   render();
 }
 
@@ -1404,7 +1404,7 @@ function deleteGalleryItem(idx) {
   if (confirm('Delete this photo from gallery?')) {
     STORE.gallery.splice(idx, 1);
     saveStore('gallery');
-    showToast('✓ Photo deleted');
+    showToast('âœ“ Photo deleted');
     render();
   }
 }
@@ -1424,7 +1424,7 @@ function handleNewsletterSubmit(e) {
       saveStore('subscribers');
     }
     if (msg) {
-      msg.textContent = '✓ Thank you! Your email has been subscribed.';
+      msg.textContent = 'âœ“ Thank you! Your email has been subscribed.';
       msg.className = 'mt-2 text-xs text-emerald-400 font-semibold block';
       setTimeout(() => msg.classList.add('hidden'), 5000);
     }
@@ -1484,14 +1484,14 @@ function copySubscribersList() {
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
     navigator.clipboard.writeText(emails);
   }
-  showToast('✓ All emails copied to clipboard!');
+  showToast('âœ“ All emails copied to clipboard!');
 }
 
 function deleteSubscriber(email) {
   if (confirm(`Remove email (${email})?`)) {
     STORE.subscribers = (STORE.subscribers || []).filter(s => s.email !== email);
     saveStore('subscribers');
-    showToast('✓ Email removed');
+    showToast('âœ“ Email removed');
     render();
   }
 }
@@ -1515,15 +1515,15 @@ function renderAdminSecurity() {
         <form onsubmit="changeAdminPassword(event)" class="space-y-4">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Current Password</label>
-            <input id="currPass" type="password" required class="admin-input" placeholder="••••••••" />
+            <input id="currPass" type="password" required class="admin-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">New Password</label>
-            <input id="newPass" type="password" required minlength="6" class="admin-input" placeholder="••••••••" />
+            <input id="newPass" type="password" required minlength="6" class="admin-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
           </div>
           <div>
             <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Confirm New Password</label>
-            <input id="confirmPass" type="password" required minlength="6" class="admin-input" placeholder="••••••••" />
+            <input id="confirmPass" type="password" required minlength="6" class="admin-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
           </div>
           <button type="submit" class="btn-luxury w-full justify-center mt-6">
             <i class="fa-solid fa-shield-halved"></i> Update Password
@@ -1559,7 +1559,7 @@ async function changeAdminPassword(e) {
     localStorage.setItem('dpag_admin_hash', newHash);
     localStorage.setItem('dpag_admin_pass', nxt);
   }
-  showToast('✓ Password updated securely!');
+  showToast('âœ“ Password updated securely!');
   if (document.getElementById('currPass')) document.getElementById('currPass').value = '';
   if (document.getElementById('newPass')) document.getElementById('newPass').value = '';
   if (document.getElementById('confirmPass')) document.getElementById('confirmPass').value = '';
@@ -1643,7 +1643,7 @@ function exportDatabaseJSON() {
   if (typeof document !== 'undefined' && document.body) {
     document.body.appendChild(a); a.click(); a.remove();
   }
-  showToast('✓ Backup downloaded!');
+  showToast('âœ“ Backup downloaded!');
 }
 
 function importDatabaseJSON(e) {
@@ -1656,7 +1656,7 @@ function importDatabaseJSON(e) {
       if (d.CATEGORIES) { STORE.categories = d.CATEGORIES; saveStore('categories'); }
       if (d.OFFERS) { STORE.offers = d.OFFERS; saveStore('offers'); }
       if (d.GALLERY_ITEMS) { STORE.gallery = d.GALLERY_ITEMS; saveStore('gallery'); }
-      showToast('✓ Data restored successfully!');
+      showToast('âœ“ Data restored successfully!');
       setTimeout(() => render(), 800);
     } catch(err) { alert('Invalid backup JSON file.'); }
   };
@@ -1711,7 +1711,7 @@ function renderMediaLightbox() {
       <div class="flex items-center justify-between z-10 py-2 gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <span class="rounded-full bg-gold-400/20 px-3 py-1 text-xs font-bold text-gold-300 border border-gold-400/40 whitespace-nowrap">
-            ${currentGalleryList.length > 1 ? `${currentGalleryIndex + 1} / ${currentGalleryList.length}` : (isVideo ? '🎬 Video' : '🖼️ Photo')}
+            ${currentGalleryList.length > 1 ? `${currentGalleryIndex + 1} / ${currentGalleryList.length}` : (isVideo ? 'ðŸŽ¬ Video' : 'ðŸ–¼ï¸ Photo')}
           </span>
           <h3 class="font-display text-sm sm:text-base font-semibold text-ivory-100 truncate max-w-[150px] sm:max-w-md">${escapeHTML(item.title || '')}</h3>
         </div>
@@ -1738,7 +1738,7 @@ function renderMediaLightbox() {
       </div>
 
       <div class="text-center py-2 text-xs text-ivory-100/60 font-gujarati">
-        ${isVideo ? '▶ વિડિયો પ્લે થઈ રહ્યો છે' : 'બંધ કરવા ✕ દબાવો અથવા ESC કી વાપરો'}
+        ${isVideo ? 'â–¶ àªµàª¿àª¡àª¿àª¯à«‹ àªªà«àª²à«‡ àª¥àªˆ àª°àª¹à«àª¯à«‹ àª›à«‡' : 'àª¬àª‚àª§ àª•àª°àªµàª¾ âœ• àª¦àª¬àª¾àªµà«‹ àª…àª¥àªµàª¾ ESC àª•à«€ àªµàª¾àªªàª°à«‹'}
       </div>
     </div>
   `;
@@ -1978,7 +1978,7 @@ if (typeof window !== 'undefined') {
         currentLang = currentLang === 'en' ? 'gu' : 'en';
         if (typeof localStorage !== 'undefined') localStorage.setItem('dpag_lang', currentLang);
         const label = document.getElementById('langLabel');
-        if (label) label.textContent = currentLang === 'en' ? 'EN' : 'ગુ';
+        if (label) label.textContent = currentLang === 'en' ? 'EN' : 'àª—à«';
         render();
       });
     }
