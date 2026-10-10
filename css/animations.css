@@ -38,36 +38,42 @@
   80% { transform: rotate(8deg) scale(1.1); }
 }
 
-/* Page Entry Slide Animation */
+/* Gentle Page Entry (Subtle Zoom-In & Soft Fade - Zero Jumpy Displacement) */
 .animate-page-entry {
-  animation: pageSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageZoomFade 0.28s cubic-bezier(0.2, 0, 0.2, 1) forwards;
 }
 
-@keyframes pageSlideIn {
-  from { opacity: 0; transform: translateY(16px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes pageZoomFade {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Scroll Reveal Animations */
+/* Scroll Reveal Animations (Subtle & Smooth) */
 .reveal, .reveal-scale {
   opacity: 0;
   will-change: opacity, transform;
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0, 0.2, 1);
 }
-.reveal { transform: translateY(28px); }
-.reveal-scale { transform: scale(0.91) translateY(16px); }
+.reveal { transform: translateY(8px); }
+.reveal-scale { transform: scale(0.98); }
 
 .reveal.visible, .reveal-scale.visible {
   opacity: 1;
   transform: none;
 }
 
-.reveal-d1 { transition-delay: 0.07s; }
-.reveal-d2 { transition-delay: 0.15s; }
-.reveal-d3 { transition-delay: 0.23s; }
-.reveal-d4 { transition-delay: 0.31s; }
-.reveal-d5 { transition-delay: 0.39s; }
-.reveal-d6 { transition-delay: 0.47s; }
+.reveal-d1 { transition-delay: 0.03s; }
+.reveal-d2 { transition-delay: 0.06s; }
+.reveal-d3 { transition-delay: 0.09s; }
+.reveal-d4 { transition-delay: 0.12s; }
+.reveal-d5 { transition-delay: 0.15s; }
+.reveal-d6 { transition-delay: 0.18s; }
 
 /* Respect Reduced Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
