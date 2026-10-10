@@ -1932,7 +1932,7 @@ if (typeof window !== 'undefined') {
         loader.style.opacity = '0';
         setTimeout(() => loader.style.display = 'none', 300);
       }
-    }, 1500);
+    }, 500);
 
     // Search Button & Drawer Listeners
     const menuBtn = document.getElementById('menuBtn');
