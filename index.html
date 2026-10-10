@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark scroll-smooth">
 <head>
 <meta charset="UTF-8" />
@@ -196,7 +196,46 @@ tailwind.config = {
 </div>
 
 <!-- ============== MAIN CONTAINER ============== -->
-<main id="app" class="min-h-screen pt-[76px]"></main>
+<main id="app" class="min-h-screen pt-[76px]">
+  <!-- HERO SECTION (Pre-rendered for Instant Paint & SEO) -->
+  <section class="relative flex min-h-[92vh] items-center overflow-hidden -mt-[76px]">
+    <div class="absolute inset-0 z-0">
+      <picture>
+        <source media="(max-width: 768px)" srcset="images/banners/hero1-mobile.webp" type="image/webp" />
+        <source srcset="images/banners/hero1.webp" type="image/webp" />
+        <img src="images/banners/hero1.jpg" alt="Handcrafted Religious Frames and Temple Decor" width="1376" height="768" fetchpriority="high" decoding="async" class="w-full h-full object-cover scale-105" />
+      </picture>
+    </div>
+
+    <div class="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-20 lg:px-10 w-full text-center">
+      <div class="pointer-events-none absolute left-1/2 top-1/2 h-[160%] w-[150%] sm:w-[120%] -translate-x-1/2 -translate-y-1/2 opacity-95" style="background: radial-gradient(circle, rgba(250, 247, 242, 0.95) 0%, rgba(250, 247, 242, 0.7) 35%, transparent 65%);"></div>
+      
+      <div class="relative z-10 max-w-5xl mx-auto">
+        <span class="inline-block bg-gold-200 text-noir-950 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm shadow-md tracking-wider">Est. 1995 · DEESA, GUJARAT</span>
+        <h1 class="mt-6 font-display text-4xl leading-[1.08] text-ivory-50 sm:text-6xl md:text-7xl font-extrabold max-w-4xl mx-auto">
+          <span class="font-gujarati text-black font-black">દર્શન ફોટો આર્ટ ગેલેરી</span>
+        </h1>
+        <p class="mt-6 max-w-2xl mx-auto text-base text-ivory-100 font-extrabold sm:text-lg leading-relaxed">
+          Frames That Turn Memories Into Art.
+        </p>
+        
+        <div class="hero-btns mt-10">
+          <a href="#/catalog" class="btn-luxury drop-shadow-xl">Explore Catalog <i class="fa-solid fa-arrow-right text-xs"></i></a>
+          <a href="tel:919723202162" class="btn-call-luxury drop-shadow-xl" aria-label="કોલ કરો">
+            <i class="fa-solid fa-phone text-sm"></i>
+            <span class="font-gujarati">કોલ કરો</span>
+          </a>
+          <a href="https://wa.me/919723202162?text=Namaste%20%F0%9F%99%8F%20Darshan%20Photo%20Art%20Gallery,%20I'd%20like%20to%20know%20more%20about%20your%20frame%20collection." target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-[#25D366] text-[#25D366] font-bold hover:bg-[#25D366] hover:text-white drop-shadow-lg bg-white/50 backdrop-blur-md">
+            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+          </a>
+          <a href="https://instagram.com/jigar_bhati_21_62" target="_blank" rel="noopener noreferrer" class="btn-outline-luxury border-pink-500 text-pink-500 font-bold hover:bg-pink-500 hover:text-white drop-shadow-lg bg-white/50 backdrop-blur-md" style="grid-column:1/-1">
+            <i class="fa-brands fa-instagram text-sm"></i> Follow Us on Instagram
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <!-- ============== FOOTER ============== -->
 <footer id="footer" class="relative overflow-hidden border-t border-white/10 bg-noir-900 pt-16 text-ivory-100">
@@ -214,11 +253,21 @@ tailwind.config = {
       </div> 
       <div>
         <h4 class="font-display text-lg text-gold-200">Quick Links</h4>
-        <ul class="mt-4 space-y-2.5 text-sm text-ivory-100/65" id="footerLinks"></ul>
+        <ul class="mt-4 space-y-2.5 text-sm text-ivory-100/65" id="footerLinks">
+          <li><a href="#/catalog" class="transition hover:text-gold-300">Catalog</a></li>
+          <li><a href="#/gallery" class="transition hover:text-gold-300">Gallery</a></li>
+          <li><a href="#/offers" class="transition hover:text-gold-300">Offers</a></li>
+          <li><a href="#/about" class="transition hover:text-gold-300">About Us</a></li>
+          <li><a href="#/contact" class="transition hover:text-gold-300">Contact</a></li>
+        </ul>
       </div>
       <div>
         <h4 class="font-display text-lg text-gold-200">Showroom Contact</h4>
-        <ul class="mt-4 space-y-2.5 text-sm text-ivory-100/65" id="footerContact"></ul>
+        <ul class="mt-4 space-y-2.5 text-sm text-ivory-100/65" id="footerContact">
+          <li class="flex items-start gap-3"><i class="fa-solid fa-location-dot mt-1 shrink-0 text-gold-400"></i>05, ઋષભ કોમ્પલેક્ષ બ્લોક-2 જલારામના મંદિર ની પાછળ જુના ગાયત્રી મંદિર ની સામે , ડીસા, તા. ડીસા, જી. બનાસકાંઠા, ગુજરાત, ભારત- 38 55 35</li>
+          <li class="flex items-center gap-3"><i class="fa-solid fa-phone shrink-0 text-gold-400"></i><a href="tel:919723202162" class="hover:text-gold-300">+91 9723202162</a></li>
+          <li class="flex items-center gap-3"><i class="fa-brands fa-whatsapp shrink-0 text-gold-400"></i><a href="https://wa.me/919723202162?text=Namaste%20%F0%9F%99%8F%20Darshan%20Photo%20Art%20Gallery,%20I'd%20like%20to%20know%20more." target="_blank" rel="noopener noreferrer" class="hover:text-gold-300">WhatsApp Direct Chat</a></li>
+        </ul>
       </div>
       <div>
         <h4 class="font-display text-lg text-gold-200">Stay Connected</h4>
