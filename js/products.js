@@ -9,7 +9,7 @@ const SITE = {
   phoneRaw: "919723202162",
   whatsapp: "919723202162",
   email: "jigarbhati1234@gmail.com",
-  address: "05, \u0a8b\u0ab7\u0aad \u0a95\u0acb\u0aae\u0acd\u0aaa\u0ab2\u0ac7\u0a95\u0acd\u0ab7 \u0aac\u0acd\u0ab2\u0acb\u0a95-2 \u0a9c\u0ab2\u0abe\u0ab0\u0abe\u0aae\u0aa8\u0abe \u0aae\u0a82\u0aa6\u0abf\u0ab0 \u0aa8\u0ac0 \u0aaa\u0abe\u0a9b\u0ab3 \u0a9c\u0ac1\u0aa8\u0abe \u0a97\u0abe\u0aaf\u0aa4\u0acd\u0ab0\u0ac0 \u0aae\u0a82\u0aa6\u0abf\u0ab0 \u0aa8\u0ac0 \u0ab8\u0abe\u0aae\u0ac7 , \u0aa1\u0ac0\u0ab8\u0abe, \u0aa4\u0abe. \u0aa1\u0ac0\u0ab8\u0abe, \u0a9c\u0ac0. \u0aac\u0aa8\u0abe\u0ab8\u0a95\u0abe\u0a82\u0aa0\u0abe, \u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4, \u0aad\u0abe\u0ab0\u0aa4- 38 55 35",
+  address: "05, પહેલો માળ વિમલ પારસ-2 કોમ્પલેક્ષ નવા બસ સ્ટેશનની સામે ઠાકોર સમાજ લાઈબ્રેરી ની નીચે , ડીસા, તા. ડીસા, જી. બનાસકાંઠા, ગુજરાત, પીનકોડ- 38 55 35",
   founded: 1995,
   social: {
     instagram: "https://instagram.com/jigar_bhati_21_62",
