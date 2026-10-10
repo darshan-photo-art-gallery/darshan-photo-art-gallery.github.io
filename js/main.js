@@ -1855,8 +1855,10 @@ function render() {
 
   app.innerHTML = `<div class="animate-page-entry">${content}</div>`;
   if (typeof document !== 'undefined') document.title = title;
-  if (typeof window !== 'undefined') window.scrollTo(0, 0);
-  setTimeout(initAfterRender, 50);
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }
+  setTimeout(initAfterRender, 40);
 }
 
 function initAfterRender() {
