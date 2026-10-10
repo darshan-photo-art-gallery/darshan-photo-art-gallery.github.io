@@ -131,13 +131,14 @@ function isWebpCanvasSupported() {
  * Reads, validates, and optimizes uploaded image files to WebP / JPEG format.
  * Target: Max 1000px longest side, 65% WebP quality / 68% JPEG quality for better mobile performance and database capacity.
  * Preserves original aspect ratio and prevents double-compression.
+ * Supports automatic diagonal full-stretch watermark overlay.
  */
-function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65) {
+function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65, watermarkUrl = null) {
   return new Promise((resolve, reject) => {
     if (!file) { reject(new Error('No file provided')); return; }
 
-    // If already a Data URL or URL string
-    if (typeof file === 'string') {
+    // If already a Data URL or URL string with no watermark requested
+    if (typeof file === 'string' && !watermarkUrl) {
       resolve(file);
       return;
     }
@@ -158,8 +159,8 @@ function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65) {
         let w = img.width;
         let h = img.height;
 
-        // Skip re-compression if image is under max dimensions and already WebP or light PNG
-        if (w <= maxW && h <= maxH && (isWebPFile || (isPNG && file.size < 600 * 1024))) {
+        // Skip re-compression if under dimensions and no watermark
+        if (!watermarkUrl && w <= maxW && h <= maxH && (isWebPFile || (isPNG && file.size < 600 * 1024))) {
           resolve(e.target.result);
           return;
         }
@@ -189,12 +190,12 @@ function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65) {
 
         if (isWebpCanvasSupported()) {
           targetMime = 'image/webp';
-          targetQuality = 0.85; // 85% WebP quality per specification
+          targetQuality = 0.85; // 85% WebP quality
         } else if (isPNG) {
           targetMime = 'image/png';
         } else {
           targetMime = 'image/jpeg';
-          targetQuality = 0.88; // 88% JPEG fallback quality per specification
+          targetQuality = 0.88; // 88% JPEG fallback quality
         }
 
         // Fill background white only for JPEG output to prevent black transparent areas
@@ -205,18 +206,51 @@ function compressImage(file, maxW = 1000, maxH = 1000, quality = 0.65) {
 
         ctx.drawImage(img, 0, 0, w, h);
 
-        try {
-          const res = canvas.toDataURL(targetMime, targetQuality);
-          resolve(res);
-        } catch (err) {
-          resolve(e.target.result);
+        const finalizeOutput = () => {
+          try {
+            const res = canvas.toDataURL(targetMime, targetQuality);
+            resolve(res);
+          } catch (err) {
+            resolve(e.target.result);
+          }
+        };
+
+        // If watermark is requested (for gallery photos)
+        if (watermarkUrl) {
+          const wm = new Image();
+          wm.crossOrigin = 'anonymous';
+          wm.onload = () => {
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            // Full stretch according to image size
+            ctx.drawImage(wm, 0, 0, w, h);
+            ctx.restore();
+            finalizeOutput();
+          };
+          wm.onerror = () => {
+            // Fallback: finalize without watermark if image fails to load
+            finalizeOutput();
+          };
+          wm.src = watermarkUrl;
+        } else {
+          finalizeOutput();
         }
       };
       img.onerror = () => reject(new Error('Invalid or corrupted image file.'));
-      img.src = e.target.result;
+      img.src = typeof file === 'string' ? file : e.target.result;
     };
     reader.onerror = () => reject(new Error('Failed to read image file.'));
-    reader.readAsDataURL(file);
+    if (typeof file === 'string') {
+      const img = new Image();
+      img.onload = () => {
+        const fakeEvent = { target: { result: file } };
+        reader.onload(fakeEvent);
+      };
+      img.onerror = () => reject(new Error('Could not load source image'));
+      img.src = file;
+    } else {
+      reader.readAsDataURL(file);
+    }
   });
 }
 

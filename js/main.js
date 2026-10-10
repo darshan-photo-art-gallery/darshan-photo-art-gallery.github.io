@@ -1527,7 +1527,8 @@ async function saveGalleryForm(e) {
     } else {
       const file = document.getElementById('gFile')?.files?.[0];
       if (file) {
-        image = await compressImage(file, 1600, 1600, 0.82);
+        // Automatically apply full stretch watermark to Gallery photos (not videos)
+        image = await compressImage(file, 1600, 1600, 0.85, 'images/watermark.png');
       }
       STORE.gallery.unshift({
         id: 'gal-' + Date.now(),
