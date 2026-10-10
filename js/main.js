@@ -1376,7 +1376,7 @@ function renderAdminGallery() {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h2 class="font-display text-2xl font-bold text-gold-200">Manage Showcase Gallery</h2>
         <button onclick="openGalleryModal()" class="btn-luxury !py-2.5 !px-5 text-xs">
-          <i class="fa-solid fa-plus"></i> Upload Photo to Gallery
+          <i class="fa-solid fa-plus"></i> Upload Photo / Video
         </button>
       </div>
 
@@ -1407,22 +1407,54 @@ function openGalleryModal() {
     <div class="modal-overlay">
       <div class="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 animate-page-entry">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 class="font-display text-2xl font-bold text-[#5A4030]">Upload Gallery Photo</h3>
+          <h3 class="font-display text-2xl font-bold text-[#5A4030]">Add Gallery Media</h3>
           <button onclick="closeModal()" class="text-ivory-100 hover:text-gold-300 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
 
         <form onsubmit="saveGalleryForm(event)" class="mt-6 space-y-4">
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Photo Title</label>
-            <input id="gTitle" required class="admin-input" placeholder="e.g. Gold Temple Arch Installation" />
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Title</label>
+            <input id="gTitle" required class="admin-input" placeholder="e.g. Royal Mataji Temple Tour" />
           </div>
+
           <div>
-            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Select Photo File</label>
-            <input id="gFile" type="file" accept="image/*" required class="admin-input text-xs" />
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Media Type</label>
+            <select id="gMediaType" onchange="toggleGalleryMediaInput(this.value)" class="admin-input text-xs">
+              <option value="image">Photo (ફોટો)</option>
+              <option value="video">Video (વીડિયો)</option>
+            </select>
           </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Category</label>
+            <select id="gCategory" class="admin-input text-xs">
+              <option value="temple">Temple Art</option>
+              <option value="frames">Luxury Frames</option>
+              <option value="videos">Videos</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+
+          <div id="gImageUploadSection">
+            <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Select Photo File</label>
+            <input id="gFile" type="file" accept="image/*" class="admin-input text-xs" />
+          </div>
+
+          <div id="gVideoUploadSection" class="hidden space-y-3">
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Video File or Video Path/URL</label>
+              <input id="gVideoFile" type="file" accept="video/mp4,video/webm" class="admin-input text-xs mb-1" />
+              <input id="gVideoUrl" class="admin-input text-xs" placeholder="Or enter URL e.g. shop-video.mp4" />
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-wider text-gold-400 font-extrabold mb-1">Video Thumbnail (Cover Photo)</label>
+              <input id="gThumbFile" type="file" accept="image/*" class="admin-input text-xs" />
+            </div>
+          </div>
+
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
             <button type="button" onclick="closeModal()" class="btn-outline-luxury !py-2.5 text-xs">Cancel</button>
-            <button type="submit" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-upload"></i> Upload</button>
+            <button type="submit" id="gSubmitBtn" class="btn-luxury !py-2.5 text-xs"><i class="fa-solid fa-upload"></i> Upload</button>
           </div>
         </form>
       </div>
@@ -1430,18 +1462,91 @@ function openGalleryModal() {
   `;
 }
 
+function toggleGalleryMediaInput(type) {
+  const imgSec = document.getElementById('gImageUploadSection');
+  const vidSec = document.getElementById('gVideoUploadSection');
+  const catSel = document.getElementById('gCategory');
+  if (type === 'video') {
+    if (imgSec) imgSec.classList.add('hidden');
+    if (vidSec) vidSec.classList.remove('hidden');
+    if (catSel) catSel.value = 'videos';
+  } else {
+    if (imgSec) imgSec.classList.remove('hidden');
+    if (vidSec) vidSec.classList.add('hidden');
+    if (catSel && catSel.value === 'videos') catSel.value = 'temple';
+  }
+}
+window.toggleGalleryMediaInput = toggleGalleryMediaInput;
+
 async function saveGalleryForm(e) {
   e.preventDefault();
   const title = document.getElementById('gTitle')?.value.trim();
-  const file = document.getElementById('gFile')?.files?.[0];
-  if (!title || !file) return;
+  const mediaType = document.getElementById('gMediaType')?.value || 'image';
+  const category = document.getElementById('gCategory')?.value || (mediaType === 'video' ? 'videos' : 'general');
+  const submitBtn = document.getElementById('gSubmitBtn');
 
-  const image = await compressImage(file, 2000, 2000, 0.85);
-  STORE.gallery.unshift({ id: 'gal-' + Date.now(), title, image, category: 'general' });
-  saveStore('gallery');
-  closeModal();
-  showToast('\u201c Photo uploaded to gallery');
-  render();
+  if (!title) return;
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    let image = 'images/products/1.jpeg';
+    let mediaUrl = '';
+
+    if (mediaType === 'video') {
+      const vidFile = document.getElementById('gVideoFile')?.files?.[0];
+      const vidUrlInput = document.getElementById('gVideoUrl')?.value.trim();
+      const thumbFile = document.getElementById('gThumbFile')?.files?.[0];
+
+      if (thumbFile) {
+        image = await compressImage(thumbFile, 1200, 1200, 0.82);
+      } else {
+        image = 'images/products/1.jpeg';
+      }
+
+      if (vidFile) {
+        // Read small local video or generate object/data
+        mediaUrl = URL.createObjectURL(vidFile);
+      } else if (vidUrlInput) {
+        mediaUrl = vidUrlInput;
+      } else {
+        mediaUrl = 'shop-video.mp4';
+      }
+
+      STORE.gallery.unshift({
+        id: 'gal-' + Date.now(),
+        title,
+        image,
+        mediaUrl: mediaUrl || image,
+        mediaType: 'video',
+        category
+      });
+    } else {
+      const file = document.getElementById('gFile')?.files?.[0];
+      if (file) {
+        image = await compressImage(file, 1600, 1600, 0.82);
+      }
+      STORE.gallery.unshift({
+        id: 'gal-' + Date.now(),
+        title,
+        image,
+        mediaUrl: image,
+        mediaType: 'image',
+        category
+      });
+    }
+
+    saveStore('gallery');
+    closeModal();
+    showToast(mediaType === 'video' ? '✓ Video added to gallery!' : '✓ Photo uploaded to gallery!');
+    render();
+  } catch (err) {
+    console.error('Gallery save error:', err);
+    showToast('⚠️ Error uploading media: ' + (err.message || err));
+  }
 }
 
 function deleteGalleryItem(idx) {
